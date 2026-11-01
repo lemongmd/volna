@@ -67,7 +67,7 @@
   <section>
     <h3>Профиль</h3>
     <div class="profile">
-      <Avatar name={name || 'Гость'} color={profile.color} size={56} />
+      <Avatar name={name || 'Гость'} color={profile.color} size={48} />
       <div class="pf">
         <input class="input" bind:value={name} maxlength="24" placeholder="Как тебя зовут?" />
         <div class="colors">
@@ -89,8 +89,8 @@
     <h3>Внешний вид</h3>
     <label class="row">
       <span>
-        <span class="t">Живые эффекты</span>
-        <span class="muted s">Анимация фона и «жидкое стекло». Выключи, если компьютер слабый.</span>
+        <span class="t">Фон под цвет обложки</span>
+        <span class="muted s">Размытая обложка текущего трека на фоне. Выключи, если компьютер слабый.</span>
       </span>
       <input type="checkbox" bind:checked={settings.fx} />
       <span class="switch"></span>
@@ -110,7 +110,7 @@
           {/if}
         </div>
       </div>
-      <button class="btn btn-glass" onclick={update} disabled={updating}>
+      <button class="btn" onclick={update} disabled={updating}>
         {#if updating}<span class="spinner"></span>{:else}<Icon name="refresh" size={16} />{/if}
         Обновить
       </button>
@@ -144,25 +144,25 @@
   </section>
 
   <section class="danger">
-    <button class="btn btn-glass" onclick={() => (recent.length = 0)}><Icon name="trash" size={16} /> Очистить историю</button>
+    <button class="btn" onclick={() => (recent.length = 0)}><Icon name="trash" size={16} /> Очистить историю</button>
   </section>
 </Modal>
 
 <style>
   h2 {
-    margin: 0 0 18px;
-    font-size: 24px;
+    margin: 0 0 14px;
+    font-size: 20px;
+    font-weight: 650;
   }
   section {
-    padding: 16px 0;
-    border-top: 1px solid var(--stroke);
+    padding: 14px 0;
+    border-top: 1px solid var(--stroke-2);
   }
   h3 {
     margin: 0 0 12px;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--faint);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
   }
   .profile {
     display: flex;
@@ -218,8 +218,8 @@
   }
   .switch {
     flex: none;
-    width: 42px;
-    height: 24px;
+    width: 36px;
+    height: 20px;
     border-radius: 99px;
     background: rgba(255, 255, 255, 0.15);
     position: relative;
@@ -228,19 +228,19 @@
   .switch::after {
     content: '';
     position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 18px;
-    height: 18px;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: #fff;
     transition: transform 0.2s;
   }
   .row input:checked + .switch {
-    background: linear-gradient(135deg, #8b5cf6, #c084fc);
+    background: var(--live);
   }
   .row input:checked + .switch::after {
-    transform: translateX(18px);
+    transform: translateX(16px);
   }
   .engine {
     display: flex;

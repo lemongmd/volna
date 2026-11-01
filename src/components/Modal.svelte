@@ -31,8 +31,7 @@
     z-index: 100;
     display: grid;
     place-items: center;
-    background: rgba(5, 3, 12, 0.55);
-    backdrop-filter: blur(6px);
+    background: rgba(0, 0, 0, 0.5);
     animation: fade 0.2s ease both;
   }
   @keyframes fade {
@@ -42,22 +41,23 @@
   }
   .modal {
     position: relative;
-    border-radius: 30px;
-    padding: 30px;
+    border-radius: 16px;
+    padding: 24px;
     max-height: calc(100vh - 80px);
     overflow-y: auto;
-    background: linear-gradient(150deg, rgba(48, 32, 84, 0.82), rgba(18, 12, 34, 0.86));
-    animation: pop 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+    background: rgba(30, 30, 37, 0.94);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    animation: pop 0.18s ease both;
   }
   @keyframes pop {
     from {
       opacity: 0;
-      transform: scale(0.94) translateY(10px);
+      transform: scale(0.98);
     }
   }
   .x {
     position: absolute;
-    top: 16px;
-    right: 16px;
+    top: 14px;
+    right: 14px;
   }
 </style>

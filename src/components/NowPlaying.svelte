@@ -2,275 +2,299 @@
   import Icon from './Icon.svelte';
   import Cover from './Cover.svelte';
   import Avatar from './Avatar.svelte';
-  import Bars from './Bars.svelte';
+  import Slider from './Slider.svelte';
   import { current, pl, ps, room, ui } from '../lib/state.svelte';
   import { dispatch, sendReaction } from '../lib/sync';
   import { fmtTime } from '../lib/util';
 
   const cur = $derived(current());
-  const upNext = $derived(ps.queue.slice(ps.index + 1, ps.index + 6));
-  const EMOJI = ['🔥', '💜', '😂', '😭', '🤯', '👏'];
+  const dur = $derived(pl.dur || cur?.duration || 0);
+  const upNext = $derived(ps.queue.slice(ps.index + 1, ps.index + 8));
+  const waiting = $derived(ps.playing && !!cur && (pl.loading || !ps.ready));
+  const EMOJI = ['🔥', '❤️', '😂', '😭', '🤯', '👏'];
   const SRC: Record<string, string> = { ytm: 'YouTube Music', yt: 'YouTube', sc: 'SoundCloud', link: 'По ссылке' };
+
+  let dragging = $state(false);
+  let dragVal = $state(0);
+  const shown = $derived(dragging ? dragVal : Math.min(pl.pos, dur || pl.pos));
 </script>
 
 {#if cur}
   <div class="now">
-    <div class="art-wrap">
-      <div class="art-glow" style="background-image:url('{cur.thumb}')"></div>
-      <div class="art" class:spin={ps.playing && ps.ready}>
-        <Cover src={cur.thumb} size="100%" radius={32} />
-        <div class="art-shine"></div>
+    <div class="left">
+      <div class="art"><Cover src={cur.thumb} size="100%" radius={12} /></div>
+      <div class="title-row">
+        <div class="meta">
+          <h1 class="ellipsis" title={cur.title}>{cur.title}</h1>
+          <div class="artist">
+            {#if cur.explicit}<span class="badge-e">E</span>{/if}
+            <span class="ellipsis">{cur.artist}</span>
+          </div>
+        </div>
+        <span class="src">{SRC[cur.source] ?? ''}</span>
+      </div>
+      <div class="prog">
+        <Slider
+          value={shown}
+          max={dur || 1}
+          step={0.1}
+          disabled={!dur}
+          label="Позиция трека"
+          oninput={(v) => ((dragging = true), (dragVal = v))}
+          onchange={(v) => ((dragging = false), dispatch({ t: 'seek', pos: v }))}
+        />
+        <div class="times"><span>{fmtTime(shown)}</span><span>{fmtTime(dur)}</span></div>
+      </div>
+      <div class="controls">
+        <button class="icon-btn" onclick={() => dispatch({ t: 'shuffle' })} aria-label="Перемешать"><Icon name="shuffle" size={18} /></button>
+        <button class="icon-btn big" onclick={() => dispatch({ t: 'prev' })} aria-label="Назад"><Icon name="prev" size={22} /></button>
+        <button class="play" onclick={() => dispatch({ t: 'toggle' })} aria-label={ps.playing ? 'Пауза' : 'Играть'}>
+          {#if waiting}<span class="spinner"></span>{:else if ps.playing}<Icon name="pause" size={22} />{:else}<Icon name="play" size={22} />{/if}
+        </button>
+        <button class="icon-btn big" onclick={() => dispatch({ t: 'next' })} aria-label="Дальше"><Icon name="next" size={22} /></button>
+        <button
+          class="icon-btn"
+          class:on={ps.repeat !== 'off'}
+          onclick={() => dispatch({ t: 'repeat', v: ps.repeat === 'off' ? 'all' : ps.repeat === 'all' ? 'one' : 'off' })}
+          aria-label="Повтор"
+        >
+          <Icon name={ps.repeat === 'one' ? 'repeat1' : 'repeat'} size={18} />
+        </button>
+      </div>
+      <div class="status muted">
+        {#if pl.loading}
+          Загружаем трек…
+        {:else if ps.playing && !ps.ready}
+          Ждём хоста…
+        {:else if pl.error}
+          <span class="err">{pl.error}</span>
+        {:else if room.code && cur.by}
+          Поставлено: {cur.by}
+        {/if}
       </div>
     </div>
 
-    <div class="info">
-      <div class="src-pill">
-        {#if ps.playing && ps.ready}<Bars size={12} />{/if}
-        {SRC[cur.source] ?? ''}
-        {#if room.code}· комната {room.code}{/if}
-      </div>
-      <h1>
-        {#if cur.explicit}<span class="badge-e big">E</span>{/if}
-        {cur.title}
-      </h1>
-      <p class="artist">{cur.artist}</p>
-      {#if cur.by && room.code}<p class="muted by">Трек в очереди от {cur.by}</p>{/if}
-
-      <div class="status">
-        {#if pl.loading}
-          <span class="spinner"></span> Загружаем трек…
-        {:else if ps.playing && !ps.ready}
-          <span class="spinner"></span> Ждём, пока хост начнёт…
-        {:else if pl.error}
-          <span class="err">{pl.error}</span>
-        {:else}
-          {fmtTime(pl.pos)} / {fmtTime(pl.dur || cur.duration)}
-        {/if}
-      </div>
-
+    <div class="right">
       {#if room.code}
-        <div class="listeners">
-          <span class="muted">Слушают сейчас</span>
-          <div class="stack">
+        <section class="surface box">
+          <div class="box-head">
+            <span>Слушают · {room.members.length}</span>
+            <span class="mono muted">{room.code}</span>
+          </div>
+          <div class="people">
             {#each room.members as m (m.uid)}
-              <span class="li">
-                <Avatar name={m.name} color={m.color} size={34} />
-                {#if m.uid === ps.hostId}<span class="crown"><Icon name="crown" size={11} stroke={2.4} /></span>{/if}
+              <span class="person">
+                <Avatar name={m.name} color={m.color} size={26} />
+                <span class="ellipsis">{m.name}</span>
+                {#if m.uid === ps.hostId}<span class="host" title="Хост"><Icon name="crown" size={12} /></span>{/if}
               </span>
             {/each}
           </div>
-        </div>
-      {/if}
-
-      <div class="reactions glass">
-        {#each EMOJI as e}
-          <button onclick={() => sendReaction(e)} aria-label="Реакция {e}">{e}</button>
-        {/each}
-      </div>
-
-      {#if upNext.length}
-        <div class="next">
-          <div class="next-head">
-            <span class="muted">Дальше в очереди</span>
-            <button class="link" onclick={() => ((ui.panel = true), (ui.tab = 'queue'))}>Вся очередь</button>
+          <div class="reactions">
+            {#each EMOJI as e}
+              <button onclick={() => sendReaction(e)} aria-label="Реакция {e}">{e}</button>
+            {/each}
           </div>
-          {#each upNext as q, i (q.qid)}
-            <button class="next-row" onclick={() => dispatch({ t: 'jump', i: ps.index + 1 + i })}>
-              <Cover src={q.thumb} size={40} radius={9} />
-              <span class="nr-meta">
-                <span class="ellipsis nr-t">{q.title}</span>
-                <span class="ellipsis muted nr-a">{q.artist}</span>
-              </span>
-              <span class="muted nr-d">{q.duration ? fmtTime(q.duration) : ''}</span>
-            </button>
-          {/each}
-        </div>
+        </section>
       {/if}
+
+      <section class="surface box">
+        <div class="box-head">
+          <span>Дальше</span>
+          <button class="link" onclick={() => ((ui.panel = true), (ui.tab = 'queue'))}>Вся очередь</button>
+        </div>
+        {#each upNext as q, i (q.qid)}
+          <button class="next-row" onclick={() => dispatch({ t: 'jump', i: ps.index + 1 + i })}>
+            <Cover src={q.thumb} size={36} radius={6} />
+            <span class="nr-meta">
+              <span class="ellipsis nr-t">{q.title}</span>
+              <span class="ellipsis nr-a">{q.artist}</span>
+            </span>
+            <span class="nr-d">{q.duration ? fmtTime(q.duration) : ''}</span>
+          </button>
+        {:else}
+          <p class="muted empty-q">Очередь закончится на этом треке.</p>
+        {/each}
+      </section>
     </div>
   </div>
 {:else}
   <div class="empty">
-    <div class="disc"><Icon name="disc" size={56} stroke={1.4} /></div>
+    <Icon name="disc" size={44} stroke={1.4} />
     <h2>Сейчас ничего не играет</h2>
     <p class="muted">Найди трек в поиске или выбери подборку на главной.</p>
-    <button class="btn btn-primary" onclick={() => (ui.view = 'search')}><Icon name="search" size={16} /> К поиску</button>
+    <button class="btn btn-primary" onclick={() => (ui.view = 'search')}><Icon name="search" size={15} /> К поиску</button>
   </div>
 {/if}
 
 <style>
   .now {
     display: grid;
-    grid-template-columns: minmax(280px, 440px) minmax(0, 1fr);
-    gap: 56px;
-    align-items: center;
-    padding: 28px 12px 0;
-    min-height: calc(100vh - 230px);
+    grid-template-columns: minmax(260px, 380px) minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+    padding: 12px 8px 0;
   }
-  .art-wrap {
-    position: relative;
-  }
-  @container (max-width: 760px) {
-    .now {
-      grid-template-columns: 1fr;
-      gap: 28px;
-    }
-    .art-wrap {
-      max-width: 320px;
-    }
-  }
-  .art-glow {
-    position: absolute;
-    inset: 8%;
-    background-size: cover;
-    background-position: center;
-    filter: blur(60px) saturate(1.8);
-    opacity: 0.8;
-    border-radius: 50%;
+  .left {
+    display: flex;
+    flex-direction: column;
   }
   .art {
-    position: relative;
     aspect-ratio: 1;
-    border-radius: 32px;
-    box-shadow:
-      0 40px 80px rgba(0, 0, 0, 0.55),
-      0 0 0 1px rgba(255, 255, 255, 0.1);
-    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-    transform: scale(0.94);
+    border-radius: 12px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
   }
-  .art.spin {
-    transform: scale(1);
+  .title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 18px;
   }
-  .art-shine {
-    position: absolute;
-    inset: 0;
-    border-radius: 32px;
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.28), transparent 38%, transparent 70%, rgba(255, 255, 255, 0.08));
-    pointer-events: none;
-  }
-  .info {
+  .meta {
+    flex: 1;
     min-width: 0;
   }
-  .src-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    border-radius: 99px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--stroke);
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-  }
   h1 {
-    font-size: 46px;
-    line-height: 1.05;
-    letter-spacing: -0.03em;
-    margin: 18px 0 8px;
-    font-weight: 750;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    margin: 0;
+    font-size: 21px;
+    font-weight: 650;
     user-select: text;
   }
-  .badge-e.big {
-    font-size: 14px;
-    height: 26px;
-    min-width: 26px;
-    vertical-align: middle;
-    border-radius: 6px;
-    margin-right: 6px;
-  }
   .artist {
-    font-size: 20px;
-    color: rgba(255, 255, 255, 0.78);
-    margin: 0;
-  }
-  .by {
-    margin: 6px 0 0;
-  }
-  .status {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 18px;
+    gap: 6px;
+    margin-top: 2px;
     color: var(--muted);
+  }
+  .src {
+    flex: none;
+    font-size: 11px;
+    color: var(--faint);
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--panel);
+    margin-top: 4px;
+  }
+  .prog {
+    margin-top: 16px;
+  }
+  .times {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--faint);
     font-variant-numeric: tabular-nums;
+    margin-top: 2px;
+  }
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 8px;
+  }
+  .big {
+    width: 40px;
+    height: 40px;
+    color: var(--text);
+  }
+  .play {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--light);
+    color: var(--light-ink);
+    transition: transform 0.1s;
+  }
+  .play:hover {
+    transform: scale(1.04);
+  }
+  .play :global(svg) {
+    margin-left: 2px;
+  }
+  .status {
+    min-height: 20px;
+    margin-top: 12px;
+    text-align: center;
+    font-size: 12.5px;
   }
   .err {
     color: var(--danger);
   }
-  .listeners {
+  .right {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-top: 22px;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
   }
-  .stack {
-    display: flex;
+  .box {
+    padding: 14px;
   }
-  .li {
-    position: relative;
-    margin-right: -8px;
-    border-radius: 50%;
-    outline: 3px solid #0d0a18;
-  }
-  .crown {
-    position: absolute;
-    top: -9px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #fbbf24;
-    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
-  }
-  .reactions {
-    display: inline-flex;
-    gap: 4px;
-    margin-top: 24px;
-    padding: 6px;
-    border-radius: 999px;
-  }
-  .reactions button {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    font-size: 22px;
-    transition: transform 0.15s, background 0.15s;
-  }
-  .reactions button:hover {
-    background: rgba(255, 255, 255, 0.12);
-    transform: scale(1.18) translateY(-2px);
-  }
-  .reactions button:active {
-    transform: scale(0.9);
-  }
-  .next {
-    margin-top: 28px;
-    max-width: 520px;
-  }
-  .next-head {
+  .box-head {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
+    align-items: center;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .people {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .person {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 200px;
+    padding: 3px 10px 3px 3px;
+    border-radius: 99px;
+    background: var(--panel-2);
     font-size: 13px;
   }
+  .host {
+    color: #f5c04e;
+    display: grid;
+  }
+  .reactions {
+    display: flex;
+    gap: 4px;
+    margin-top: 12px;
+  }
+  .reactions button {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 19px;
+    background: var(--panel);
+    transition: background 0.12s, transform 0.12s;
+  }
+  .reactions button:hover {
+    background: var(--panel-3);
+    transform: translateY(-2px);
+  }
   .link {
-    color: var(--accent);
-    font-weight: 600;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .link:hover {
+    color: var(--text);
   }
   .next-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
-    padding: 6px;
-    border-radius: 12px;
+    padding: 5px 6px;
+    border-radius: 8px;
     text-align: left;
   }
   .next-row:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: var(--panel-2);
   }
   .nr-meta {
     flex: 1;
@@ -279,38 +303,41 @@
     flex-direction: column;
   }
   .nr-t {
-    font-weight: 600;
+    font-weight: 550;
+    font-size: 13px;
   }
   .nr-a,
   .nr-d {
     font-size: 12px;
+    color: var(--muted);
+  }
+  .empty-q {
+    margin: 4px 0;
+    font-size: 13px;
   }
   .empty {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding-top: 12vh;
-    gap: 6px;
+    padding-top: 14vh;
+    color: var(--muted);
   }
   .empty h2 {
-    margin: 18px 0 0;
+    margin: 16px 0 4px;
+    color: var(--text);
+    font-size: 19px;
   }
   .empty p {
     margin: 0 0 16px;
   }
-  .disc {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    color: rgba(255, 255, 255, 0.7);
-    background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.35), transparent 35%),
-      conic-gradient(from 0deg, #4c1d95, #7c3aed, #c084fc, #38bdf8, #4c1d95);
-    box-shadow: 0 30px 70px rgba(124, 58, 237, 0.4);
-  }
-  :global(.fx) .disc {
-    animation: spin 12s linear infinite;
+  @container (max-width: 720px) {
+    .now {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .left {
+      max-width: 380px;
+    }
   }
 </style>

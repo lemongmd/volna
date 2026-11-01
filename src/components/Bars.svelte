@@ -19,7 +19,7 @@
     width: 3px;
     height: 100%;
     border-radius: 2px;
-    background: linear-gradient(180deg, #e9d5ff, var(--accent));
+    background: #fff;
     transform-origin: bottom;
     animation: eq 1s ease-in-out infinite alternate;
   }

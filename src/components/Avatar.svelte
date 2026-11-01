@@ -21,13 +21,10 @@
     border-radius: 50%;
     font-weight: 700;
     color: #fff;
-    background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--c) 60%, #fff), var(--c) 55%, color-mix(in srgb, var(--c) 60%, #000));
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.4),
-      0 4px 12px color-mix(in srgb, var(--c) 40%, transparent);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    background: color-mix(in srgb, var(--c) 78%, #000);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
   }
   .ring {
-    outline: 2px solid #0c0817;
+    outline: 2px solid #17171c;
   }
 </style>

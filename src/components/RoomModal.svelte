@@ -61,13 +61,12 @@
 
 <Modal onclose={close} width={480}>
   <div class="head">
-    <div class="ico"><Icon name="users" size={26} /></div>
     <h2>Слушать вместе</h2>
     <p class="muted">Все в комнате слышат один и тот же трек в одну и ту же секунду. Очередь, чат и реакции — общие.</p>
   </div>
 
-  <button class="btn btn-accent big" onclick={create} disabled={!!busy}>
-    {#if busy === 'create'}<span class="spinner"></span>{:else}<Icon name="sparkles" size={18} />{/if}
+  <button class="btn btn-primary big" onclick={create} disabled={!!busy}>
+    {#if busy === 'create'}<span class="spinner"></span>{:else}<Icon name="plus" size={16} />{/if}
     Создать новую комнату
   </button>
   {#if room.code}
@@ -88,8 +87,8 @@
       autocomplete="off"
       aria-label="Код комнаты"
     />
-    <button class="btn btn-primary" type="submit" disabled={code.length < 4 || !!busy}>
-      {#if busy === 'join'}<span class="spinner dark"></span>{/if}
+    <button class="btn btn-lg" type="submit" disabled={code.length < 4 || !!busy}>
+      {#if busy === 'join'}<span class="spinner"></span>{/if}
       Войти
     </button>
   </form>
@@ -99,94 +98,76 @@
 
 <style>
   .head {
-    text-align: center;
-    margin-bottom: 22px;
-  }
-  .ico {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 14px;
-    border-radius: 20px;
-    display: grid;
-    place-items: center;
-    background: linear-gradient(135deg, #7c3aed, #c084fc 60%, #38bdf8);
-    box-shadow: 0 14px 40px rgba(124, 58, 237, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    margin-bottom: 20px;
   }
   h2 {
-    margin: 0 0 8px;
-    font-size: 26px;
-    letter-spacing: -0.02em;
+    margin: 0 0 6px;
+    font-size: 20px;
+    font-weight: 650;
   }
   .head p {
-    margin: 0 auto;
-    max-width: 360px;
+    margin: 0;
+    font-size: 13px;
+    max-width: 380px;
   }
   .big {
     width: 100%;
-    height: 52px;
-    font-size: 15px;
+    height: 42px;
   }
   .or {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin: 22px 0 16px;
+    gap: 10px;
+    margin: 18px 0 14px;
     color: var(--faint);
     font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
   }
   .or::before,
   .or::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: var(--stroke);
+    background: var(--stroke-2);
   }
   .join {
     display: flex;
-    gap: 10px;
+    gap: 8px;
   }
   .code-input {
     flex: 1;
     min-width: 0;
-    height: 52px;
-    border-radius: 16px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--stroke);
+    height: 42px;
+    border-radius: var(--r-sm);
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid transparent;
     outline: none;
     text-align: center;
-    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-    font-size: 26px;
+    font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace;
+    font-size: 20px;
     font-weight: 700;
     letter-spacing: 0.3em;
     user-select: text;
   }
   .code-input:focus {
-    border-color: rgba(167, 139, 250, 0.7);
+    border-color: var(--stroke-2);
   }
   .code-input::placeholder {
     color: var(--faint);
     letter-spacing: 0.2em;
   }
   .join .btn {
-    height: 52px;
-    padding: 0 26px;
-  }
-  .spinner.dark {
-    border-color: rgba(20, 12, 40, 0.2);
-    border-top-color: #140c28;
+    height: 42px;
   }
   .error {
-    margin: 14px 0 0;
+    margin: 12px 0 0;
     color: var(--danger);
-    text-align: center;
+    font-size: 13px;
   }
   .small {
     font-size: 12px;
   }
   .center {
     text-align: center;
-    margin: 10px 0 0;
+    margin: 8px 0 0;
   }
 </style>

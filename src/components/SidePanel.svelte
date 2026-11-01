@@ -98,7 +98,7 @@
         >
           <span class="grip"><Icon name="grip" size={14} /></span>
           <button class="q-cover" onclick={() => dispatch({ t: 'jump', i })} aria-label="Играть">
-            <Cover src={q.thumb} size={42} radius={9} />
+            <Cover src={q.thumb} size={38} radius={6} />
             {#if i === ps.index}<span class="q-eq"><Bars playing={ps.playing} size={14} /></span>{/if}
           </button>
           <div class="q-meta">
@@ -119,7 +119,7 @@
     <div class="empty solo">
       <Icon name="users" size={30} />
       <p>Чат и список людей появятся, когда ты зайдёшь в комнату.</p>
-      <button class="btn btn-accent" onclick={() => (ui.modal = 'join')}>Слушать вместе</button>
+      <button class="btn btn-primary" onclick={() => (ui.modal = 'join')}>Слушать вместе</button>
     </div>
   {:else if ui.tab === 'chat'}
     <div class="scroll chat" bind:this={chatBox}>
@@ -139,7 +139,7 @@
       {/each}
     </div>
     <div class="quick">
-      {#each ['🔥', '💜', '😂', '😭', '🤯', '👏'] as e}
+      {#each ['🔥', '❤️', '😂', '😭', '🤯', '👏'] as e}
         <button onclick={() => sendReaction(e)} aria-label="Реакция {e}">{e}</button>
       {/each}
     </div>
@@ -187,7 +187,7 @@
         <p class="muted small note">Музыкой управляет {hostName || 'хост'}.</p>
       {/if}
 
-      <button class="btn btn-glass full leave" onclick={() => leaveRoom()}>
+      <button class="btn full leave" onclick={() => leaveRoom()}>
         <Icon name="logout" size={16} /> Выйти из комнаты
       </button>
     </div>
@@ -196,27 +196,21 @@
 
 <style>
   .panel {
-    width: 360px;
+    width: 340px;
     flex: none;
-    margin: 4px 16px 120px 0;
+    margin-top: 44px;
     border-radius: var(--r-lg);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    animation: slide-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-    background: linear-gradient(160deg, rgba(36, 24, 64, 0.6), rgba(16, 11, 30, 0.55));
-  }
-  @keyframes slide-in {
-    from {
-      opacity: 0;
-      transform: translateX(24px);
-    }
+    background: rgba(24, 24, 30, 0.6);
+    animation: fade-in 0.2s ease both;
   }
   .tabs {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 10px;
+    padding: 8px;
     border-bottom: 1px solid var(--stroke);
   }
   .tab {
@@ -224,26 +218,25 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    height: 32px;
-    padding: 0 12px;
-    border-radius: 99px;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 8px;
     color: var(--muted);
-    font-weight: 600;
+    font-weight: 500;
     font-size: 13px;
   }
   .tab:hover {
     color: var(--text);
   }
   .tab.active {
-    background: rgba(255, 255, 255, 0.14);
+    background: var(--panel-3);
     color: var(--text);
-    box-shadow: var(--hl);
   }
   .dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: #f472b6;
+    background: var(--light);
   }
   .close {
     margin-left: auto;
@@ -251,8 +244,8 @@
   .q-head {
     display: flex;
     align-items: center;
-    padding: 8px 10px 4px 16px;
-    font-size: 13px;
+    padding: 6px 8px 2px 14px;
+    font-size: 12.5px;
   }
   .grow {
     flex: 1;
@@ -260,71 +253,69 @@
   .scroll {
     flex: 1;
     overflow-y: auto;
-    padding: 6px 8px 12px;
+    padding: 4px 6px 10px;
   }
   .q-row {
     display: grid;
-    grid-template-columns: 14px 42px minmax(0, 1fr) auto 28px;
+    grid-template-columns: 12px 38px minmax(0, 1fr) auto 26px;
     align-items: center;
-    gap: 10px;
-    padding: 6px 6px 6px 4px;
-    border-radius: 12px;
+    gap: 9px;
+    padding: 5px 4px;
+    border-radius: 8px;
     border-top: 2px solid transparent;
   }
   .q-row:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--panel-2);
   }
   .q-row.cur {
-    background: linear-gradient(90deg, rgba(167, 139, 250, 0.25), rgba(167, 139, 250, 0.05));
+    background: var(--panel-3);
   }
   .q-row.past {
-    opacity: 0.5;
+    opacity: 0.45;
   }
   .q-row.over {
-    border-top-color: var(--accent);
+    border-top-color: rgba(255, 255, 255, 0.7);
   }
   .grip {
     color: var(--faint);
     cursor: grab;
     opacity: 0;
+    display: grid;
   }
   .q-row:hover .grip {
     opacity: 1;
   }
   .q-cover {
     position: relative;
-    border-radius: 9px;
+    border-radius: 6px;
   }
   .q-eq {
     position: absolute;
     inset: 0;
     display: grid;
     place-items: center;
-    background: rgba(0, 0, 0, 0.45);
-    border-radius: 9px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 6px;
   }
   .q-meta {
     min-width: 0;
   }
   .q-t {
-    font-weight: 600;
+    font-weight: 550;
     font-size: 13px;
-  }
-  .cur .q-t {
-    color: #e9d5ff;
   }
   .q-a {
     color: var(--muted);
     font-size: 12px;
   }
   .q-d {
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--faint);
     font-variant-numeric: tabular-nums;
   }
   .rm {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     opacity: 0;
   }
   .q-row:hover .rm {
@@ -336,121 +327,115 @@
     align-items: center;
     text-align: center;
     gap: 6px;
-    padding: 48px 20px;
+    padding: 40px 20px;
     color: var(--muted);
+    font-size: 13px;
   }
   .empty.solo {
     flex: 1;
     justify-content: center;
   }
   .empty p {
-    margin: 4px 0 12px;
+    margin: 4px 0 10px;
   }
   .chat {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px;
+    gap: 6px;
+    padding: 10px;
     user-select: text;
   }
   .sys {
     align-self: center;
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--faint);
-    padding: 4px 10px;
-    border-radius: 99px;
-    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 8px;
     text-align: center;
   }
   .msg {
     display: flex;
     align-items: flex-end;
-    gap: 8px;
+    gap: 7px;
     max-width: 88%;
   }
   .msg.mine {
     align-self: flex-end;
   }
   .bubble {
-    padding: 8px 12px 6px;
-    border-radius: 16px 16px 16px 4px;
-    background: rgba(255, 255, 255, 0.09);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    min-width: 60px;
+    padding: 7px 10px 5px;
+    border-radius: 12px 12px 12px 4px;
+    background: var(--panel-2);
+    min-width: 56px;
   }
   .mine .bubble {
-    border-radius: 16px 16px 4px 16px;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.75), rgba(192, 132, 252, 0.6));
-    border-color: rgba(255, 255, 255, 0.18);
+    border-radius: 12px 12px 4px 12px;
+    background: var(--light);
+    color: var(--light-ink);
   }
   .who {
-    font-size: 12px;
-    font-weight: 700;
-    margin-bottom: 2px;
+    font-size: 11.5px;
+    font-weight: 650;
+    margin-bottom: 1px;
   }
   .txt {
     white-space: pre-wrap;
     word-break: break-word;
+    font-size: 13.5px;
   }
   .ts {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.5);
+    opacity: 0.5;
     text-align: right;
-    margin-top: 2px;
+    margin-top: 1px;
   }
   .quick {
     display: flex;
     justify-content: space-around;
-    padding: 6px 10px 0;
+    padding: 6px 8px 0;
     border-top: 1px solid var(--stroke);
   }
   .quick button {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    font-size: 19px;
-    transition: transform 0.15s, background 0.15s;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    font-size: 17px;
+    transition: background 0.12s;
   }
   .quick button:hover {
-    transform: scale(1.2);
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--panel-2);
   }
   .compose {
     display: flex;
-    gap: 8px;
-    padding: 8px 10px 12px;
-  }
-  .compose .input {
-    height: 42px;
-    border-radius: 99px;
+    gap: 6px;
+    padding: 8px;
   }
   .send {
-    width: 42px;
-    height: 42px;
+    width: 36px;
+    height: 36px;
     flex: none;
-    border-radius: 50%;
+    border-radius: 8px;
     display: grid;
     place-items: center;
-    background: linear-gradient(135deg, #8b5cf6, #c084fc);
-    color: #fff;
+    background: var(--light);
+    color: var(--light-ink);
   }
   .send:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
   }
   .room-card {
-    margin: 6px 4px 18px;
-    padding: 18px;
-    border-radius: 20px;
-    background: linear-gradient(140deg, rgba(124, 58, 237, 0.4), rgba(14, 165, 233, 0.15));
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    margin: 6px 2px 16px;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--panel);
+    border: 1px solid var(--stroke);
     text-align: center;
   }
   .rc-code {
-    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-    font-size: 34px;
+    font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace;
+    font-size: 28px;
     font-weight: 700;
-    letter-spacing: 0.16em;
-    margin: 4px 0 14px;
+    letter-spacing: 0.14em;
+    margin: 2px 0 12px;
     user-select: text;
   }
   .full {
@@ -464,52 +449,50 @@
     margin-top: 10px;
   }
   .cdot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: var(--ok);
+    background: var(--live);
   }
   .cdot.warn {
-    background: #fbbf24;
+    background: #f5c04e;
   }
   .small {
     font-size: 12px;
   }
   .ppl-head {
-    padding: 0 8px 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    padding: 0 8px 4px;
   }
   .person {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px;
-    border-radius: 12px;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 8px;
   }
   .person:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--panel);
   }
   .p-meta {
     flex: 1;
     min-width: 0;
   }
   .p-name {
-    font-weight: 600;
+    font-weight: 550;
   }
   .crown {
-    color: #fbbf24;
+    color: #f5c04e;
+    display: grid;
   }
   .toggle {
     position: relative;
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: 16px 4px 0;
-    padding: 14px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--stroke);
+    margin: 14px 2px 0;
+    padding: 12px;
+    border-radius: 10px;
+    background: var(--panel);
     cursor: pointer;
   }
   .toggle > span:first-child {
@@ -519,7 +502,7 @@
     gap: 2px;
   }
   .t-title {
-    font-weight: 600;
+    font-weight: 550;
   }
   .toggle input {
     position: absolute;
@@ -528,35 +511,35 @@
   }
   .switch {
     flex: none;
-    width: 42px;
-    height: 24px;
+    width: 36px;
+    height: 20px;
     border-radius: 99px;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.16);
     position: relative;
-    transition: background 0.2s;
+    transition: background 0.15s;
   }
   .switch::after {
     content: '';
     position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 18px;
-    height: 18px;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: #fff;
-    transition: transform 0.2s;
+    transition: transform 0.15s;
   }
   .toggle input:checked + .switch {
-    background: linear-gradient(135deg, #8b5cf6, #c084fc);
+    background: var(--live);
   }
   .toggle input:checked + .switch::after {
-    transform: translateX(18px);
+    transform: translateX(16px);
   }
   .note {
-    margin: 14px 8px 0;
+    margin: 12px 8px 0;
   }
   .leave {
-    margin-top: 18px;
-    color: #fda4af;
+    margin-top: 16px;
+    color: #ff9aa9;
   }
 </style>

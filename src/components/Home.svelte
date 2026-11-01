@@ -12,6 +12,7 @@
   let loading = $state(false);
   let error = $state('');
   let link = $state('');
+  let copied = $state(false);
 
   const hour = new Date().getHours();
   const hello = hour < 6 ? 'Доброй ночи' : hour < 12 ? 'Доброе утро' : hour < 18 ? 'Добрый день' : 'Добрый вечер';
@@ -30,7 +31,8 @@
     }
   }
 
-  function openLink() {
+  function openLink(e: Event) {
+    e.preventDefault();
     const v = link.trim();
     if (!v) return;
     ui.query = v;
@@ -40,6 +42,8 @@
   async function copyCode() {
     if (!room.code) return;
     await navigator.clipboard.writeText(room.code).catch(() => {});
+    copied = true;
+    setTimeout(() => (copied = false), 1500);
   }
 
   $effect(() => {
@@ -47,91 +51,84 @@
   });
 </script>
 
-<section class="hello">
-  <h1>{hello}{profile.name ? `, ${profile.name}` : ''}</h1>
-  <p class="muted">Что слушаем сегодня?</p>
-</section>
+<header class="head">
+  <h1 class="page-title">{hello}{profile.name ? `, ${profile.name}` : ''}</h1>
+</header>
 
-<section class="hero">
-  <div class="together glass">
-    <div class="glow"></div>
+<section class="top">
+  <div class="panel surface room-panel">
     {#if room.code}
-      <div class="label"><span class="live-dot"></span> Вы в комнате</div>
-      <div class="big-code">
-        {room.code}
-        <button class="icon-btn" onclick={copyCode} title="Скопировать код" aria-label="Скопировать код">
-          <Icon name="copy" size={18} />
-        </button>
+      <div class="rp-main">
+        <div class="eyebrow"><span class="live"></span> Комната</div>
+        <div class="code-row">
+          <span class="code mono">{room.code}</span>
+          <button class="icon-btn" onclick={copyCode} title="Скопировать код" aria-label="Скопировать код">
+            <Icon name={copied ? 'check' : 'copy'} size={16} />
+          </button>
+        </div>
+        <div class="people">
+          {#each room.members as m (m.uid)}
+            <span class="person"><Avatar name={m.name} color={m.color} size={22} /> {m.name}</span>
+          {/each}
+        </div>
       </div>
-      <p class="muted">Друзья вводят этот код и слышат то же, что и ты — секунда в секунду.</p>
-      <div class="people">
-        {#each room.members as m (m.uid)}
-          <span class="person"><Avatar name={m.name} color={m.color} size={28} /> {m.name}</span>
-        {/each}
-      </div>
-      <div class="actions">
+      <div class="rp-actions">
         <button class="btn btn-primary" onclick={() => ((ui.panel = true), (ui.tab = 'chat'))}>
-          <Icon name="chat" size={16} /> Открыть чат
+          <Icon name="chat" size={15} /> Чат
         </button>
-        <button class="btn btn-glass" onclick={() => ((ui.panel = true), (ui.tab = 'queue'))}>Общая очередь</button>
+        <button class="btn" onclick={() => ((ui.panel = true), (ui.tab = 'queue'))}>
+          <Icon name="queue" size={15} /> Очередь
+        </button>
       </div>
     {:else}
-      <div class="label"><Icon name="sparkles" size={14} /> Мультиплеер</div>
-      <h2>Слушайте<br />вместе</h2>
-      <p class="muted">Создай комнату, скинь код другу — и вы слушаете одну и ту же музыку одновременно. С чатом и реакциями.</p>
-      <div class="actions">
+      <div class="rp-main">
+        <div class="eyebrow"><Icon name="users" size={13} /> Слушать вместе</div>
+        <h2>Одна музыка — одна секунда</h2>
+        <p class="muted">Создай комнату и отправь код. Все услышат один и тот же трек синхронно, с общей очередью и чатом.</p>
+      </div>
+      <div class="rp-actions">
         <button class="btn btn-primary" onclick={() => (ui.modal = 'join')}>
-          Создать комнату <Icon name="arrowRight" size={16} />
+          <Icon name="plus" size={15} /> Создать комнату
         </button>
-        <button class="btn btn-glass" onclick={() => (ui.modal = 'join')}>Войти по коду</button>
+        <button class="btn" onclick={() => (ui.modal = 'join')}>Войти по коду</button>
       </div>
     {/if}
-    {#if !room.code}<div class="orb"></div>{/if}
   </div>
 
-  <div class="paste glass">
-    <div class="label"><Icon name="link" size={14} /> Вставь ссылку</div>
-    <h3>YouTube, SoundCloud, Spotify и ещё 1000+ сайтов</h3>
-    <p class="muted">Трек, альбом или плейлист — Волна найдёт и сыграет. Треки из Spotify ищутся на YouTube без цензуры.</p>
-    <form
-      class="paste-form"
-      onsubmit={(e) => {
-        e.preventDefault();
-        openLink();
-      }}
-    >
-      <input class="input" placeholder="https://…" bind:value={link} spellcheck="false" />
-      <button class="btn btn-accent" type="submit" disabled={!isLink(link)}>Открыть</button>
-    </form>
-  </div>
+  <form class="panel surface link-panel" onsubmit={openLink}>
+    <div class="eyebrow"><Icon name="link" size={13} /> По ссылке</div>
+    <p class="muted">YouTube, SoundCloud, Spotify — трек, альбом или плейлист.</p>
+    <div class="link-row">
+      <input class="input" placeholder="Вставь ссылку…" bind:value={link} spellcheck="false" />
+      <button class="btn btn-primary" type="submit" disabled={!isLink(link)} aria-label="Открыть">
+        <Icon name="arrowRight" size={16} />
+      </button>
+    </div>
+  </form>
 </section>
 
 {#if recent.length}
   <section class="block">
-    <div class="block-head">
-      <h2 class="section-title">Недавно слушали</h2>
-    </div>
+    <h2 class="section-title">Недавно слушали</h2>
     <div class="scroller">
       {#each recent.slice(0, 14) as t (t.id)}
-        <div class="sc-item"><TrackCard track={t} /></div>
+        <TrackCard track={t} />
       {/each}
     </div>
   </section>
 {/if}
 
 <section class="block">
-  <div class="block-head">
-    <h2 class="section-title">Подборки</h2>
-  </div>
+  <h2 class="section-title">Подборки</h2>
   <div class="chips">
     {#each PICKS as p, i}
-      <button class="chip" class:active={pick === i} onclick={() => loadPick(i)}>{p.emoji} {p.label}</button>
+      <button class="tab-chip" class:active={pick === i} onclick={() => loadPick(i)}>{p.label}</button>
     {/each}
   </div>
   {#if error}
-    <div class="err">
+    <div class="err surface">
       <p>Не получилось загрузить подборку: {error}</p>
-      <button class="btn btn-glass" onclick={() => loadPick(pick)}><Icon name="refresh" size={16} /> Ещё раз</button>
+      <button class="btn" onclick={() => loadPick(pick)}><Icon name="refresh" size={15} /> Ещё раз</button>
     </div>
   {:else}
     <div class="grid">
@@ -149,199 +146,151 @@
 </section>
 
 <style>
-  .hello h1 {
-    margin: 18px 0 2px;
-    font-size: 34px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+  .head {
+    margin: 8px 0 18px;
   }
-  .hello p {
-    margin: 0 0 22px;
-    font-size: 15px;
-  }
-  .hero {
+  .top {
     display: grid;
-    grid-template-columns: 1.35fr 1fr;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 12px;
+  }
+  .panel {
+    padding: 18px 20px;
+  }
+  .room-panel {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
     gap: 20px;
   }
-  .together,
-  .paste {
-    border-radius: var(--r-lg);
-    padding: 28px;
-    overflow: hidden;
-    min-height: 260px;
+  .rp-main {
+    min-width: 0;
   }
-  .together {
-    background: linear-gradient(140deg, rgba(124, 58, 237, 0.55), rgba(76, 29, 149, 0.35) 45%, rgba(14, 165, 233, 0.18));
+  .rp-actions {
+    display: flex;
+    gap: 8px;
+    flex: none;
   }
-  .glow {
-    position: absolute;
-    inset: auto -20% -60% 30%;
-    height: 120%;
-    background: radial-gradient(circle, rgba(192, 132, 252, 0.45), transparent 60%);
-    pointer-events: none;
-    z-index: -1;
-  }
-  .orb {
-    position: absolute;
-    right: 34px;
-    top: 50%;
-    width: 170px;
-    height: 170px;
-    margin-top: -85px;
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 22%),
-      radial-gradient(circle at 50% 50%, rgba(196, 181, 253, 0.55), rgba(124, 58, 237, 0.35) 55%, rgba(56, 189, 248, 0.35));
-    box-shadow:
-      inset 0 0 40px rgba(255, 255, 255, 0.25),
-      inset -10px -20px 50px rgba(30, 10, 60, 0.5),
-      0 30px 60px rgba(76, 29, 149, 0.5);
-    pointer-events: none;
-    z-index: -1;
-  }
-  :global(.fx) .orb {
-    animation: bob 6s ease-in-out infinite alternate;
-  }
-  @keyframes bob {
-    to {
-      transform: translateY(-14px) rotate(8deg);
-    }
-  }
-  .label {
-    display: inline-flex;
+  .eyebrow {
+    display: flex;
     align-items: center;
     gap: 6px;
     font-size: 12px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: rgba(255, 255, 255, 0.75);
-    padding: 5px 10px;
-    border-radius: 99px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: var(--muted);
   }
-  .live-dot {
+  .live {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: var(--ok);
-    box-shadow: 0 0 8px var(--ok);
+    background: var(--live);
   }
   h2 {
-    font-size: 40px;
-    line-height: 1.02;
-    letter-spacing: -0.03em;
-    margin: 16px 0 10px;
-    font-weight: 700;
-  }
-  h3 {
-    margin: 14px 0 8px;
-    font-size: 19px;
+    margin: 10px 0 6px;
+    font-size: 20px;
     font-weight: 650;
     letter-spacing: -0.01em;
   }
-  .together p {
-    max-width: 380px;
+  .room-panel p,
+  .link-panel p {
+    margin: 0;
+    font-size: 13px;
+    max-width: 440px;
   }
-  .actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
+  .link-panel p {
+    margin-top: 10px;
   }
-  .big-code {
+  .code-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin: 14px 0 4px;
-    font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-    font-size: 44px;
+    gap: 6px;
+    margin: 6px 0 10px;
+  }
+  .code {
+    font-size: 30px;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
+    user-select: text;
   }
   .people {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
-    max-width: 420px;
+    gap: 6px;
   }
   .person {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 3px 12px 3px 3px;
+    gap: 6px;
+    padding: 2px 10px 2px 2px;
     border-radius: 99px;
-    background: rgba(255, 255, 255, 0.1);
-    font-weight: 500;
+    background: var(--panel-2);
+    font-size: 13px;
   }
-  .paste-form {
+  .link-row {
     display: flex;
     gap: 8px;
-    margin-top: 18px;
+    margin-top: 14px;
+  }
+  .link-row .btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    flex: none;
   }
   .block {
-    margin-top: 38px;
+    margin-top: 30px;
   }
-  .block-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
+  .block .section-title {
+    margin-bottom: 14px;
   }
   .scroller {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: 168px;
-    gap: 20px;
+    grid-auto-columns: 160px;
+    gap: 16px;
     overflow-x: auto;
-    padding: 10px 10px 16px;
-    margin: -10px -10px 0;
+    padding-bottom: 8px;
   }
   .chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 22px;
+    gap: 6px;
+    margin-bottom: 18px;
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-    gap: 26px 22px;
-  }
-  @container (max-width: 900px) {
-    .hero {
-      grid-template-columns: 1fr;
-    }
-    .orb {
-      width: 120px;
-      height: 120px;
-      margin-top: -60px;
-      opacity: 0.7;
-    }
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 22px 16px;
   }
   .sk-art {
     aspect-ratio: 1;
-    border-radius: 18px;
+    border-radius: 8px;
   }
   .sk-line {
-    height: 12px;
-    border-radius: 6px;
-    margin-top: 12px;
+    height: 11px;
+    border-radius: 4px;
+    margin-top: 10px;
     width: 80%;
   }
   .sk-line.short {
     width: 50%;
-    margin-top: 8px;
+    margin-top: 6px;
   }
   .err {
-    padding: 24px;
-    border-radius: var(--r);
-    background: rgba(251, 113, 133, 0.08);
-    border: 1px solid rgba(251, 113, 133, 0.25);
+    padding: 18px 20px;
   }
   .err p {
     margin: 0 0 12px;
+  }
+  @container (max-width: 860px) {
+    .top {
+      grid-template-columns: 1fr;
+    }
+  }
+  @container (max-width: 640px) {
+    .room-panel {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 </style>

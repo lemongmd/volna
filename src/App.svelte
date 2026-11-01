@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import Backdrop from './components/Backdrop.svelte';
-  import TitleBar from './components/TitleBar.svelte';
+  import Rail from './components/Rail.svelte';
+  import WindowControls from './components/WindowControls.svelte';
   import PlayerBar from './components/PlayerBar.svelte';
   import SidePanel from './components/SidePanel.svelte';
   import Home from './components/Home.svelte';
@@ -36,39 +37,35 @@
   });
 </script>
 
-<!-- SVG-фильтр для эффекта «жидкого стекла» (преломление краёв) -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <filter id="liquid-glass" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
-    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="2" seed="7" result="noise" />
-    <feGaussianBlur in="noise" stdDeviation="2" result="soft" />
-    <feDisplacementMap in="SourceGraphic" in2="soft" scale="16" xChannelSelector="R" yChannelSelector="G" />
-  </filter>
-</svg>
-
 <div class="app" class:fx={settings.fx}>
   <Backdrop />
-  <TitleBar />
+  <Rail />
 
-  <div class="body">
-    <main class:with-panel={ui.panel}>
-      {#key ui.view}
-        <div class="view">
-          {#if ui.view === 'home'}
-            <Home />
-          {:else if ui.view === 'search'}
-            <Search />
-          {:else}
-            <NowPlaying />
-          {/if}
-        </div>
-      {/key}
-    </main>
-    {#if ui.panel}
-      <SidePanel />
-    {/if}
+  <div class="column">
+    <div class="drag" data-tauri-drag-region></div>
+    <WindowControls />
+
+    <div class="body">
+      <main>
+        {#key ui.view}
+          <div class="view">
+            {#if ui.view === 'home'}
+              <Home />
+            {:else if ui.view === 'search'}
+              <Search />
+            {:else}
+              <NowPlaying />
+            {/if}
+          </div>
+        {/key}
+      </main>
+      {#if ui.panel}
+        <SidePanel />
+      {/if}
+    </div>
+
+    <PlayerBar />
   </div>
-
-  <PlayerBar />
 
   <div class="bursts" aria-hidden="true">
     {#each bursts as b (b.id)}
@@ -97,34 +94,49 @@
     position: relative;
     height: 100%;
     display: grid;
-    grid-template-rows: 60px 1fr;
+    grid-template-columns: 64px minmax(0, 1fr);
     overflow: hidden;
   }
-  .body {
+  .column {
     position: relative;
-    display: flex;
-    min-height: 0;
     z-index: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    padding: 0 8px 8px 0;
+  }
+  .drag {
+    position: absolute;
+    inset: 0 140px auto 0;
+    height: 40px;
+    z-index: 5;
+  }
+  .body {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    min-height: 0;
+    margin-bottom: 8px;
   }
   main {
     flex: 1;
     min-width: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 12px 36px 132px;
-    scroll-behavior: smooth;
+    padding: 44px 24px 28px 20px;
     container-type: inline-size;
   }
   .view {
-    max-width: 1400px;
+    max-width: 1320px;
     margin: 0 auto;
-    animation: fade-up 0.35s ease both;
+    animation: fade-in 0.25s ease both;
   }
   .bursts {
     position: fixed;
-    left: 0;
+    left: 64px;
     right: 0;
-    bottom: 110px;
+    bottom: 96px;
     height: 0;
     pointer-events: none;
     z-index: 60;
@@ -138,28 +150,26 @@
     animation: float-up 2.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
   }
   .emoji {
-    font-size: 40px;
-    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.4));
+    font-size: 36px;
   }
   .who {
     font-size: 11px;
     padding: 2px 8px;
-    border-radius: 99px;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(8px);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.5);
     margin-top: 2px;
   }
   @keyframes float-up {
     0% {
-      transform: translateY(0) scale(0.4);
+      transform: translateY(0) scale(0.5);
       opacity: 0;
     }
     15% {
-      transform: translateY(-40px) scale(1.15);
+      transform: translateY(-30px) scale(1.1);
       opacity: 1;
     }
     100% {
-      transform: translateY(-340px) scale(0.9);
+      transform: translateY(-300px) scale(0.9);
       opacity: 0;
     }
   }

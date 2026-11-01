@@ -27,7 +27,6 @@
     flex: none;
     overflow: hidden;
     background: rgba(255, 255, 255, 0.06);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
   img {
     width: 100%;
@@ -40,7 +39,7 @@
     height: 100%;
     display: grid;
     place-items: center;
-    color: rgba(255, 255, 255, 0.55);
-    background: linear-gradient(135deg, #4c1d95, #7c3aed 50%, #0ea5e9);
+    color: rgba(255, 255, 255, 0.4);
+    background: linear-gradient(135deg, #2a2a33, #1b1b22);
   }
 </style>

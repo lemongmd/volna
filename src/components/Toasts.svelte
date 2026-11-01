@@ -11,33 +11,27 @@
 <style>
   .toasts {
     position: fixed;
-    left: 50%;
-    bottom: 120px;
+    left: calc(50% + 32px);
+    bottom: 92px;
     transform: translateX(-50%);
     z-index: 90;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     pointer-events: none;
   }
   .toast {
-    padding: 10px 18px;
-    border-radius: 99px;
-    font-weight: 500;
-    max-width: 560px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    max-width: 520px;
     text-align: center;
-    background: linear-gradient(135deg, rgba(60, 40, 100, 0.85), rgba(25, 16, 46, 0.85));
-    animation: toast-in 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+    background: rgba(36, 36, 44, 0.92);
+    animation: fade-in 0.2s ease both;
   }
   .toast.error {
-    background: linear-gradient(135deg, rgba(120, 30, 60, 0.9), rgba(60, 16, 34, 0.9));
-    border-color: rgba(251, 113, 133, 0.4);
-  }
-  @keyframes toast-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px) scale(0.95);
-    }
+    background: rgba(70, 24, 34, 0.94);
+    border-color: rgba(255, 107, 129, 0.3);
   }
 </style>

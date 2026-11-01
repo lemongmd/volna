@@ -16,53 +16,54 @@
 <div class="row" class:cur={isCur} ondblclick={() => playNow(track)} role="listitem">
   <div class="num">
     {#if isCur}
-      <Bars playing={ps.playing} size={14} />
+      <Bars playing={ps.playing} size={12} />
     {:else if index != null}
       <span class="n">{index + 1}</span>
     {/if}
-    <button class="row-play" onclick={() => playNow(track)} aria-label="Играть"><Icon name="play" size={16} /></button>
+    <button class="row-play" onclick={() => playNow(track)} aria-label="Играть"><Icon name="play" size={14} /></button>
   </div>
-  <Cover src={track.thumb} size={46} radius={10} />
+  <Cover src={track.thumb} size={38} radius={6} />
   <div class="meta">
-    <div class="title ellipsis">
-      {#if track.explicit}<span class="badge-e" title="Без цензуры (explicit)">E</span>{/if}
+    <div class="title">
+      {#if track.explicit}<span class="badge-e" title="Explicit — без цензуры">E</span>{/if}
       <span class="ellipsis">{track.title}</span>
     </div>
     <div class="artist ellipsis">{track.artist}</div>
   </div>
   <span class="src">{SRC[track.source] ?? ''}</span>
-  <span class="dur">{track.duration ? fmtTime(track.duration) : ''}</span>
   <div class="actions">
     <button class="icon-btn" onclick={() => playNext(track)} title="Сыграть следующим" aria-label="Сыграть следующим">
-      <Icon name="playNext" size={17} />
+      <Icon name="playNext" size={16} />
     </button>
     <button class="icon-btn" onclick={() => addToQueue([track])} title="В очередь" aria-label="В очередь">
-      <Icon name="plus" size={18} />
+      <Icon name="plus" size={16} />
     </button>
   </div>
+  <span class="dur">{track.duration ? fmtTime(track.duration) : ''}</span>
 </div>
 
 <style>
   .row {
     display: grid;
-    grid-template-columns: 32px 46px minmax(0, 1fr) 90px 52px 84px;
+    grid-template-columns: 28px 38px minmax(0, 1fr) 84px 72px 44px;
     align-items: center;
-    gap: 14px;
-    padding: 7px 12px 7px 8px;
-    border-radius: 14px;
-    transition: background 0.15s;
+    gap: 12px;
+    height: 52px;
+    padding: 0 12px 0 8px;
+    border-radius: 10px;
+    transition: background 0.12s;
   }
   .row:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.06);
   }
   .row.cur {
-    background: linear-gradient(90deg, rgba(167, 139, 250, 0.22), rgba(167, 139, 250, 0.04));
+    background: rgba(255, 255, 255, 0.09);
   }
   .num {
     position: relative;
     display: grid;
     place-items: center;
-    height: 32px;
+    height: 28px;
     color: var(--faint);
     font-variant-numeric: tabular-nums;
   }
@@ -71,7 +72,7 @@
     inset: 0;
     display: grid;
     place-items: center;
-    color: #fff;
+    color: var(--text);
     opacity: 0;
   }
   .row:hover .row-play {
@@ -88,15 +89,12 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-weight: 600;
-  }
-  .cur .title {
-    color: #e9d5ff;
+    font-weight: 550;
+    min-width: 0;
   }
   .artist {
     color: var(--muted);
-    font-size: 13px;
-    margin-top: 1px;
+    font-size: 12.5px;
   }
   .src {
     font-size: 11px;
@@ -105,7 +103,7 @@
   }
   .dur {
     color: var(--muted);
-    font-size: 13px;
+    font-size: 12.5px;
     font-variant-numeric: tabular-nums;
     text-align: right;
   }
@@ -114,7 +112,6 @@
     justify-content: flex-end;
     gap: 2px;
     opacity: 0;
-    transition: opacity 0.15s;
   }
   .row:hover .actions {
     opacity: 1;
