@@ -49,6 +49,13 @@ export function setVolume(v: number, muted: boolean) {
   audio.volume = muted ? 0 : Math.max(0, Math.min(1, v * v));
 }
 
+/** Точная позиция для текста песни (чаще, чем timeupdate). */
+export function currentTime(): number {
+  const c = current();
+  if (c && loadedQid === c.qid && loadingQid !== c.qid) return audio.currentTime;
+  return pl.pos;
+}
+
 /** Текущая позиция загруженного трека (для хоста), иначе null. */
 export function positionFor(qid: string | undefined): number | null {
   if (!qid || loadedQid !== qid || loadingQid === qid) return null;

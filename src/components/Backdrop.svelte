@@ -1,5 +1,6 @@
 <script lang="ts">
   import { current, settings } from '../lib/state.svelte';
+  import { api } from '../lib/api';
 
   // Фон окрашивается обложкой текущего трека: она сильно размыта и затемнена.
   const thumb = $derived(settings.fx ? (current()?.thumb ?? '') : '');
@@ -8,7 +9,7 @@
 <div class="backdrop" aria-hidden="true">
   {#key thumb}
     {#if thumb}
-      <img class="cover" src={thumb} alt="" referrerpolicy="no-referrer" />
+      <img class="cover" src={api.img(thumb)} alt="" referrerpolicy="no-referrer" />
     {/if}
   {/key}
   <div class="shade"></div>

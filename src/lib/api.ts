@@ -14,6 +14,14 @@ export interface DepsProgress {
   total: number;
 }
 
+export interface RemoteLyrics {
+  synced: string | null;
+  plain: string | null;
+  instrumental: boolean;
+  title: string;
+  artist: string;
+}
+
 export const api = {
   setProxy: (proxy: string) => invoke<void>('set_proxy', { proxy }),
   depsStatus: () => invoke<DepsStatus>('deps_status'),
@@ -24,4 +32,8 @@ export const api = {
   resolveLink: (url: string) => invoke<Track[]>('resolve_link', { url }),
   onDepsProgress: (cb: (p: DepsProgress) => void) => listen<DepsProgress>('deps-progress', (e) => cb(e.payload)),
   streamUrl: (key: string) => convertFileSrc(key, 'stream'),
+  lyrics: (title: string, artist: string, duration: number) =>
+    invoke<RemoteLyrics | null>('lyrics', { title, artist, duration }),
+  /** Обложка через Rust-прокси (с прокси из настроек и кэшем). */
+  img: (url: string) => (!url || !/^https?:/i.test(url) ? url : convertFileSrc(url, 'img')),
 };

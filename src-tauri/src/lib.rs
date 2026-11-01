@@ -1,4 +1,6 @@
 mod deps;
+mod images;
+mod lyrics;
 mod search;
 mod stream;
 mod ytdlp;
@@ -41,6 +43,7 @@ pub struct Inner {
     pub streams: Mutex<HashMap<String, StreamEntry>>,
     pub locks: Mutex<HashMap<String, Arc<tokio::sync::Mutex<()>>>>,
     pub sc_client_id: Mutex<Option<String>>,
+    pub images: Mutex<images::ImageCache>,
 }
 
 #[derive(Clone)]
@@ -114,6 +117,7 @@ pub fn run() {
                 streams: Mutex::new(HashMap::new()),
                 locks: Mutex::new(HashMap::new()),
                 sc_client_id: Mutex::new(None),
+                images: Mutex::new(images::ImageCache::default()),
             })));
             Ok(())
         })
@@ -121,6 +125,12 @@ pub fn run() {
             let state = ctx.app_handle().state::<AppState>().inner().clone();
             tauri::async_runtime::spawn(async move {
                 responder.respond(stream::serve(state, request).await);
+            });
+        })
+        .register_asynchronous_uri_scheme_protocol("img", |ctx, request, responder| {
+            let state = ctx.app_handle().state::<AppState>().inner().clone();
+            tauri::async_runtime::spawn(async move {
+                responder.respond(images::serve(state, request).await);
             });
         })
         .invoke_handler(tauri::generate_handler![
@@ -131,6 +141,7 @@ pub fn run() {
             search::search,
             ytdlp::resolve,
             ytdlp::resolve_link,
+            lyrics::lyrics,
         ])
         .run(tauri::generate_context!())
         .expect("не удалось запустить Волну");

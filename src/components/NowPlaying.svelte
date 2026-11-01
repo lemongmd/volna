@@ -3,13 +3,14 @@
   import Cover from './Cover.svelte';
   import Avatar from './Avatar.svelte';
   import Slider from './Slider.svelte';
+  import Lyrics from './Lyrics.svelte';
   import { current, pl, ps, room, ui } from '../lib/state.svelte';
   import { dispatch, sendReaction } from '../lib/sync';
   import { fmtTime } from '../lib/util';
 
   const cur = $derived(current());
   const dur = $derived(pl.dur || cur?.duration || 0);
-  const upNext = $derived(ps.queue.slice(ps.index + 1, ps.index + 8));
+  const upNext = $derived(ps.queue.slice(ps.index + 1, ps.index + 30));
   const waiting = $derived(ps.playing && !!cur && (pl.loading || !ps.ready));
   const EMOJI = ['🔥', '❤️', '😂', '😭', '🤯', '👏'];
   const SRC: Record<string, string> = { ytm: 'YouTube Music', yt: 'YouTube', sc: 'SoundCloud', link: 'По ссылке' };
@@ -75,47 +76,61 @@
     </div>
 
     <div class="right">
-      {#if room.code}
-        <section class="surface box">
-          <div class="box-head">
-            <span>Слушают · {room.members.length}</span>
-            <span class="mono muted">{room.code}</span>
-          </div>
-          <div class="people">
-            {#each room.members as m (m.uid)}
-              <span class="person">
-                <Avatar name={m.name} color={m.color} size={26} />
-                <span class="ellipsis">{m.name}</span>
-                {#if m.uid === ps.hostId}<span class="host" title="Хост"><Icon name="crown" size={12} /></span>{/if}
-              </span>
-            {/each}
-          </div>
-          <div class="reactions">
-            {#each EMOJI as e}
-              <button onclick={() => sendReaction(e)} aria-label="Реакция {e}">{e}</button>
-            {/each}
-          </div>
-        </section>
-      {/if}
-
-      <section class="surface box">
-        <div class="box-head">
-          <span>Дальше</span>
-          <button class="link" onclick={() => ((ui.panel = true), (ui.tab = 'queue'))}>Вся очередь</button>
-        </div>
-        {#each upNext as q, i (q.qid)}
-          <button class="next-row" onclick={() => dispatch({ t: 'jump', i: ps.index + 1 + i })}>
-            <Cover src={q.thumb} size={36} radius={6} />
-            <span class="nr-meta">
-              <span class="ellipsis nr-t">{q.title}</span>
-              <span class="ellipsis nr-a">{q.artist}</span>
-            </span>
-            <span class="nr-d">{q.duration ? fmtTime(q.duration) : ''}</span>
+      <div class="tabs">
+        <button class="tab-chip" class:active={ui.npTab === 'lyrics'} onclick={() => (ui.npTab = 'lyrics')}>Текст</button>
+        <button class="tab-chip" class:active={ui.npTab === 'next'} onclick={() => (ui.npTab = 'next')}>Дальше</button>
+        {#if room.code}
+          <button class="tab-chip" class:active={ui.npTab === 'room'} onclick={() => (ui.npTab = 'room')}>
+            Слушают · {room.members.length}
           </button>
+        {/if}
+      </div>
+
+      <div class="pane">
+        {#if ui.npTab === 'lyrics'}
+          <Lyrics />
+        {:else if ui.npTab === 'room' && room.code}
+          <section class="surface box">
+            <div class="box-head">
+              <span>Комната</span>
+              <span class="mono muted">{room.code}</span>
+            </div>
+            <div class="people">
+              {#each room.members as m (m.uid)}
+                <span class="person">
+                  <Avatar name={m.name} color={m.color} size={26} />
+                  <span class="ellipsis">{m.name}</span>
+                  {#if m.uid === ps.hostId}<span class="host" title="Хост"><Icon name="crown" size={11} /></span>{/if}
+                </span>
+              {/each}
+            </div>
+            <div class="reactions">
+              {#each EMOJI as e}
+                <button onclick={() => sendReaction(e)} aria-label="Реакция {e}">{e}</button>
+              {/each}
+            </div>
+          </section>
         {:else}
-          <p class="muted empty-q">Очередь закончится на этом треке.</p>
-        {/each}
-      </section>
+          <section class="surface box scroll-box">
+            <div class="box-head">
+              <span>Дальше</span>
+              <button class="link" onclick={() => ((ui.panel = true), (ui.tab = 'queue'))}>Вся очередь</button>
+            </div>
+            {#each upNext as q, i (q.qid)}
+              <button class="next-row" onclick={() => dispatch({ t: 'jump', i: ps.index + 1 + i })}>
+                <Cover src={q.thumb} size={36} radius={6} />
+                <span class="nr-meta">
+                  <span class="ellipsis nr-t">{q.title}</span>
+                  <span class="ellipsis nr-a">{q.artist}</span>
+                </span>
+                <span class="nr-d">{q.duration ? fmtTime(q.duration) : ''}</span>
+              </button>
+            {:else}
+              <p class="muted empty-q">Очередь закончится на этом треке.</p>
+            {/each}
+          </section>
+        {/if}
+      </div>
     </div>
   </div>
 {:else}
@@ -130,10 +145,11 @@
 <style>
   .now {
     display: grid;
-    grid-template-columns: minmax(260px, 380px) minmax(0, 1fr);
+    grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
     gap: 48px;
     align-items: start;
     padding: 12px 8px 0;
+    height: calc(100vh - 150px);
   }
   .left {
     display: flex;
@@ -229,6 +245,20 @@
     flex-direction: column;
     gap: 12px;
     min-width: 0;
+    height: 100%;
+    min-height: 0;
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+  }
+  .pane {
+    flex: 1;
+    min-height: 0;
+  }
+  .scroll-box {
+    max-height: 100%;
+    overflow-y: auto;
   }
   .box {
     padding: 14px;
@@ -335,6 +365,10 @@
     .now {
       grid-template-columns: 1fr;
       gap: 24px;
+      height: auto;
+    }
+    .pane {
+      height: 60vh;
     }
     .left {
       max-width: 380px;

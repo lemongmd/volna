@@ -27,6 +27,14 @@
     }
   }
 
+  function toggleLyrics() {
+    if (ui.view === 'now' && ui.npTab === 'lyrics') ui.view = 'home';
+    else {
+      ui.view = 'now';
+      ui.npTab = 'lyrics';
+    }
+  }
+
   const volIcon = $derived(
     settings.muted || settings.volume === 0 ? 'mute' : settings.volume < 0.5 ? 'volumeLow' : 'volume',
   );
@@ -112,6 +120,9 @@
       />
     </div>
     <div class="seg">
+      <button class="icon-btn" class:on={ui.view === 'now' && ui.npTab === 'lyrics'} onclick={toggleLyrics} aria-label="Текст песни" title="Текст песни">
+        <Icon name="lyrics" size={16} />
+      </button>
       {#if room.code}
         <button class="icon-btn rel" class:on={ui.panel && ui.tab === 'chat'} onclick={() => togglePanel('chat')} aria-label="Чат" title="Чат">
           <Icon name="chat" size={16} />
