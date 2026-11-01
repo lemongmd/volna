@@ -4,8 +4,20 @@
   import { current, toast } from '../lib/state.svelte';
   import { currentTime } from '../lib/player';
   import { dispatch } from '../lib/sync';
-  import { clearCustom, getLyrics, getOffset, setCustom, setOffset, type LyricsData } from '../lib/lyrics';
-  import { errText } from '../lib/util';
+  import {
+    acceptCandidate,
+    clearCustom,
+    clearPicked,
+    getCandidates,
+    getLyrics,
+    getOffset,
+    previewLines,
+    setCustom,
+    setOffset,
+    type Candidate,
+    type LyricsData,
+  } from '../lib/lyrics';
+  import { errText, fmtTime } from '../lib/util';
 
   type Row = { t: number; text: string; dots?: boolean; end?: number };
 
@@ -18,6 +30,10 @@
   let now = $state(0);
   let box: HTMLDivElement | undefined = $state();
   let fileInput: HTMLInputElement | undefined = $state();
+  // «Оно?»: варианты по одному названию и текущий показанный
+  let cands = $state<Candidate[]>([]);
+  let ci = $state(0);
+  let exhausted = $state(false);
   let userScrollUntil = 0;
   let loadedFor = '';
   let raf = 0;
@@ -41,7 +57,7 @@
     return out;
   });
 
-  async function load(force = false) {
+  async function load(force = false, skipExact = false) {
     const t = cur;
     if (!t) return;
     loadedFor = t.id;
@@ -50,10 +66,21 @@
     error = '';
     data = null;
     active = -1;
+    cands = [];
+    ci = 0;
+    exhausted = false;
     try {
-      const d = await getLyrics(t, force);
+      const d = skipExact ? null : await getLyrics(t, force);
       if (loadedFor !== t.id) return;
       data = d;
+      if (!d) {
+        // Точный поиск не помог — ищем по одному названию и спрашиваем «Оно?»
+        const list = await getCandidates(t);
+        if (loadedFor !== t.id) return;
+        const sure = list.length === 1 && t.duration > 0 && Math.abs(list[0].duration - t.duration) <= 3;
+        if (sure) data = acceptCandidate(t, list[0]);
+        else cands = list;
+      }
     } catch (e) {
       if (loadedFor === t.id) error = errText(e);
     } finally {
@@ -124,6 +151,27 @@
     load(true);
   }
 
+  function yes() {
+    if (!cur || !cands[ci]) return;
+    data = acceptCandidate(cur, cands[ci]);
+    cands = [];
+    toast('Запомнили текст для этого трека');
+  }
+
+  function no() {
+    if (ci < cands.length - 1) ci += 1;
+    else {
+      cands = [];
+      exhausted = true;
+    }
+  }
+
+  function chooseAnother() {
+    if (!cur) return;
+    clearPicked(cur);
+    load(false, true);
+  }
+
   const dotsProgress = (r: Row) => (r.end ? Math.min(1, Math.max(0, (now - r.t) / (r.end - r.t))) : 0);
 </script>
 
@@ -152,6 +200,29 @@
         {/if}
       {/each}
       <div class="pad-bottom"></div>
+    {:else if cands.length}
+      {@const c = cands[ci]}
+      <div class="ask">
+        <div class="ask-head">
+          Точного совпадения нет — нашли по названию
+          {#if cands.length > 1}<span class="ask-count">вариант {ci + 1} из {cands.length}</span>{/if}
+        </div>
+        <div class="ask-meta">
+          <span class="ask-title">{c.title}</span>
+          <span class="muted">{c.artist}{c.album ? ` · ${c.album}` : ''}{c.duration ? ` · ${fmtTime(c.duration)}` : ''}</span>
+        </div>
+        <div class="ask-lines">
+          {#each previewLines(c) as l}
+            <p>{l}</p>
+          {/each}
+          <p class="ask-more">…</p>
+        </div>
+        <div class="ask-q">Оно?</div>
+        <div class="row">
+          <button class="btn btn-primary btn-lg" onclick={yes}><Icon name="check" size={15} /> Да</button>
+          <button class="btn btn-lg" onclick={no}>{ci < cands.length - 1 ? 'Нет, следующий' : 'Нет'}</button>
+        </div>
+      </div>
     {:else if data?.plain}
       <div class="plain">{data.plain}</div>
     {:else if data?.instrumental}
@@ -159,7 +230,7 @@
     {:else}
       <div class="state col">
         <Icon name="lyrics" size={28} />
-        <p>{error || 'Для этого трека текста пока нет.'}</p>
+        <p>{error || (exhausted ? 'Подходящий текст не нашёлся.' : 'Для этого трека текста пока нет.')}</p>
         <p class="muted small">Можно загрузить свой .lrc-файл (текст с таймкодами) — он сохранится для этого трека.</p>
         <div class="row">
           <button class="btn btn-primary" onclick={() => fileInput?.click()}><Icon name="upload" size={14} /> Загрузить .lrc</button>
@@ -171,7 +242,11 @@
 
   {#if data}
     <div class="toolbar">
-      <span class="src">{data.source === 'custom' ? 'Свой текст' : data.source === 'ytm' ? 'YouTube Music' : 'LRCLIB'}</span>
+      <span class="src">
+        {data.source === 'custom' ? 'Свой текст' : data.source === 'ytm' ? 'YouTube Music' : 'LRCLIB'}{data.picked
+          ? ' · выбран вручную'
+          : ''}
+      </span>
       {#if data.lines}
         <span class="offset" title="Сдвиг текста относительно музыки">
           <button onclick={() => shift(-0.5)} aria-label="Текст раньше"><Icon name="dash" size={14} /></button>
@@ -183,6 +258,11 @@
       <button class="icon-btn" onclick={() => fileInput?.click()} title="Загрузить свой .lrc" aria-label="Загрузить свой .lrc">
         <Icon name="upload" size={15} />
       </button>
+      {#if data.source !== 'custom'}
+        <button class="icon-btn" onclick={chooseAnother} title="Не тот текст — выбрать другой" aria-label="Выбрать другой текст">
+          <Icon name="refresh" size={15} />
+        </button>
+      {/if}
       {#if data.source === 'custom'}
         <button class="icon-btn" onclick={removeCustom} title="Убрать свой текст" aria-label="Убрать свой текст">
           <Icon name="trash" size={15} />
@@ -366,5 +446,56 @@
   }
   .grow {
     flex: 1;
+  }
+  .ask {
+    max-width: 560px;
+    padding: var(--s6) var(--s3) var(--s5);
+    animation: fade-in 0.25s ease both;
+  }
+  .ask-head {
+    display: flex;
+    align-items: center;
+    gap: var(--s3);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .ask-count {
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--panel-2);
+    font-size: 12px;
+  }
+  .ask-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: var(--s4);
+  }
+  .ask-title {
+    font-size: 17px;
+    font-weight: 650;
+  }
+  .ask-lines {
+    margin-top: var(--s5);
+    padding-left: var(--s4);
+    border-left: 2px solid var(--stroke-2);
+  }
+  .ask-lines p {
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .ask-lines .ask-more {
+    color: var(--faint);
+  }
+  .ask-q {
+    margin-top: var(--s5);
+    font-size: 26px;
+    font-weight: 750;
+  }
+  .ask .row {
+    margin-top: var(--s4);
   }
 </style>

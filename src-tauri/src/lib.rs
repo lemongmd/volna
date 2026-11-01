@@ -125,6 +125,7 @@ pub fn run() {
             ytdlp::resolve,
             ytdlp::resolve_link,
             lyrics::lyrics,
+            lyrics::lyrics_candidates,
         ])
         .run(tauri::generate_context!())
         .expect("не удалось запустить Волну");

@@ -260,6 +260,121 @@ pub async fn lyrics(
     }
 }
 
+
+// ───────── поиск по одному названию (для «Оно?») ─────────
+
+#[derive(Serialize, Clone)]
+pub struct Candidate {
+    id: i64,
+    title: String,
+    artist: String,
+    album: String,
+    duration: f64,
+    synced: Option<String>,
+    plain: Option<String>,
+}
+
+/// Для сравнения названий: только буквы и цифры в нижнем регистре.
+fn norm(s: &str) -> String {
+    s.chars().filter(|c| c.is_alphanumeric()).flat_map(|c| c.to_lowercase()).collect()
+}
+
+/// Когда точный поиск не нашёл текст (например, на SoundCloud исполнитель
+/// указан иначе), ищем только по названию и отдаём несколько вариантов —
+/// пользователь сам выберет нужный.
+#[tauri::command]
+pub async fn lyrics_candidates(
+    state: State<'_, AppState>,
+    title: String,
+    duration: f64,
+) -> Result<Vec<Candidate>, String> {
+    let state = state.inner().clone();
+    let full = clean_title(&title);
+    let mut titles: Vec<String> = Vec::new();
+    for sep in [" - ", " — ", " – "] {
+        if let Some((_, r)) = full.split_once(sep) {
+            titles.push(clean_title(r));
+            break;
+        }
+    }
+    titles.push(full);
+    titles.retain(|t| !t.is_empty());
+    titles.dedup();
+    let want: Vec<String> = titles.iter().map(|t| norm(t)).collect();
+
+    let mut found: Vec<Value> = Vec::new();
+    let mut any_ok = false;
+    let mut last_err = String::new();
+    for t in &titles {
+        for key in ["track_name", "q"] {
+            match lrclib(&state, "/api/search", &[(key, t.clone())]).await {
+                Ok(v) => {
+                    any_ok = true;
+                    for item in v.as_array().cloned().unwrap_or_default() {
+                        let id = item["id"].as_i64().unwrap_or(0);
+                        if id != 0 && !found.iter().any(|f| f["id"].as_i64() == Some(id)) {
+                            found.push(item);
+                        }
+                    }
+                }
+                Err(Fail::NotFound) => any_ok = true,
+                Err(Fail::Down(e)) => last_err = e,
+            }
+        }
+    }
+    if !any_ok {
+        return Err(format!("LRCLIB сейчас недоступен ({last_err})"));
+    }
+
+    let has = |v: &Value, k: &str| v[k].as_str().map(|s| !s.trim().is_empty()).unwrap_or(false);
+    let score = |v: &Value| -> i32 {
+        let mut s = 0;
+        if has(v, "syncedLyrics") {
+            s += 3;
+        }
+        let name = norm(v["trackName"].as_str().unwrap_or(""));
+        if want.iter().any(|w| *w == name) {
+            s += 4;
+        } else if want.iter().any(|w| !w.is_empty() && (name.contains(w.as_str()) || w.contains(name.as_str()))) {
+            s += 1;
+        }
+        if duration > 0.0 {
+            let d = (v["duration"].as_f64().unwrap_or(0.0) - duration).abs();
+            s += if d <= 3.0 {
+                4
+            } else if d <= 10.0 {
+                2
+            } else if d > 40.0 {
+                -2
+            } else {
+                0
+            };
+        }
+        s
+    };
+    let mut items: Vec<Value> = found
+        .into_iter()
+        .filter(|v| has(v, "syncedLyrics") || has(v, "plainLyrics"))
+        .collect();
+    items.sort_by_key(|v| -score(v));
+    Ok(items
+        .into_iter()
+        .take(4)
+        .map(|v| {
+            let s = |k: &str| v[k].as_str().filter(|s| !s.trim().is_empty()).map(String::from);
+            Candidate {
+                id: v["id"].as_i64().unwrap_or(0),
+                title: s("trackName").unwrap_or_default(),
+                artist: s("artistName").unwrap_or_default(),
+                album: s("albumName").unwrap_or_default(),
+                duration: v["duration"].as_f64().unwrap_or(0.0),
+                synced: s("syncedLyrics"),
+                plain: s("plainLyrics"),
+            }
+        })
+        .collect())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -272,6 +387,12 @@ mod tests {
         assert_eq!(clean_title("Song Official Audio"), "Song");
         assert_eq!(clean_artist("Artist feat. Other"), "Artist");
         assert_eq!(clean_artist("Artist - Topic"), "Artist");
+    }
+
+    #[test]
+    fn normalizes_titles() {
+        assert_eq!(norm("Время на Веселье!"), norm("время на веселье"));
+        assert_ne!(norm("Плывут"), norm("Плыву"));
     }
 
     #[test]

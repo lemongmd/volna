@@ -33,6 +33,8 @@ export const api = {
   streamUrl: (key: string) => convertFileSrc(key, 'stream'),
   lyrics: (title: string, artist: string, duration: number, url: string) =>
     invoke<RemoteLyrics | null>('lyrics', { title, artist, duration, url }),
+  lyricsCandidates: (title: string, duration: number) =>
+    invoke<import('./lyrics').Candidate[]>('lyrics_candidates', { title, duration }),
   /** Обложка через Rust (с кэшем в памяти). */
   img: (url: string) => (!url || !/^https?:/i.test(url) ? url : convertFileSrc(url, 'img')),
 };
