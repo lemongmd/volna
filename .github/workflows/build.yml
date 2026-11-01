@@ -6,9 +6,17 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'Версия релиза, например v0.1.0 (пусто — просто сборка)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
+
+env:
+  RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || inputs.release }}
 
 jobs:
   windows:
@@ -51,16 +59,18 @@ jobs:
           if-no-files-found: error
 
       - name: Портативный файл для релиза
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: env.RELEASE_TAG != ''
         shell: pwsh
-        run: Copy-Item src-tauri/target/release/Volna.exe "Volna-${{ github.ref_name }}-portable.exe"
+        run: Copy-Item src-tauri/target/release/Volna.exe "Volna-${{ env.RELEASE_TAG }}-portable.exe"
 
-      - name: Релиз (для тегов v*)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Релиз (тег v* или ручной запуск с версией)
+        if: env.RELEASE_TAG != ''
         uses: softprops/action-gh-release@v2
         with:
-          name: Волна ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
+          name: Волна ${{ env.RELEASE_TAG }}
           body_path: .github/RELEASE_NOTES.md
           files: |
             src-tauri/target/release/bundle/nsis/*.exe
-            Volna-${{ github.ref_name }}-portable.exe
+            Volna-${{ env.RELEASE_TAG }}-portable.exe
