@@ -147,21 +147,21 @@
 
 <style>
   .head {
-    margin: 8px 0 18px;
+    margin: 0 0 var(--s5);
   }
   .top {
     display: grid;
     grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-    gap: 12px;
+    gap: var(--s4);
   }
   .panel {
-    padding: 18px 20px;
+    padding: var(--s5);
   }
   .room-panel {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 20px;
+    gap: var(--s5);
   }
   .rp-main {
     min-width: 0;
@@ -186,7 +186,7 @@
     background: var(--live);
   }
   h2 {
-    margin: 10px 0 6px;
+    margin: var(--s3) 0 var(--s2);
     font-size: 20px;
     font-weight: 650;
     letter-spacing: -0.01em;
@@ -198,7 +198,7 @@
     max-width: 440px;
   }
   .link-panel p {
-    margin-top: 10px;
+    margin-top: var(--s3);
   }
   .code-row {
     display: flex;
@@ -228,8 +228,8 @@
   }
   .link-row {
     display: flex;
-    gap: 8px;
-    margin-top: 14px;
+    gap: var(--s2);
+    margin-top: var(--s4);
   }
   .link-row .btn {
     width: 36px;
@@ -238,33 +238,33 @@
     flex: none;
   }
   .block {
-    margin-top: 30px;
+    margin-top: var(--s7);
   }
   .block .section-title {
-    margin-bottom: 14px;
+    margin-bottom: var(--s4);
   }
   .scroller {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: 160px;
-    gap: 16px;
+    grid-auto-columns: 176px;
+    gap: var(--s5);
     overflow-x: auto;
-    padding-bottom: 8px;
+    padding-bottom: var(--s3);
   }
   .chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 18px;
+    gap: var(--s2);
+    margin-bottom: var(--s5);
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 22px 16px;
+    grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+    gap: 36px var(--s5);
   }
   .sk-art {
     aspect-ratio: 1;
-    border-radius: 8px;
+    border-radius: 10px;
   }
   .sk-line {
     height: 11px;
@@ -277,7 +277,7 @@
     margin-top: 6px;
   }
   .err {
-    padding: 18px 20px;
+    padding: var(--s5);
   }
   .err p {
     margin: 0 0 12px;

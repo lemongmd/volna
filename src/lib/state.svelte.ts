@@ -11,7 +11,6 @@ export interface Settings {
   volume: number;
   muted: boolean;
   broker: string;
-  proxy: string;
   fx: boolean;
   source: 'ytm' | 'yt' | 'sc';
 }
@@ -19,7 +18,7 @@ export interface Settings {
 export const profile: Profile = $state(load<Profile>('profile', { uid: rid(12), name: '', color: pickColor() }));
 
 export const settings: Settings = $state(
-  load<Settings>('settings', { volume: 0.8, muted: false, broker: '', proxy: '', fx: true, source: 'ytm' }),
+  load<Settings>('settings', { volume: 0.8, muted: false, broker: '', fx: true, source: 'ytm' }),
 );
 
 export const ui = $state({

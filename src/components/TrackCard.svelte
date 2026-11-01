@@ -5,14 +5,15 @@
   import { current, ps } from '../lib/state.svelte';
   import { addToQueue, playNow } from '../lib/sync';
   import type { Track } from '../lib/types';
+  import { hoverEnd, hoverStart } from '../lib/prefetch';
 
   let { track }: { track: Track } = $props();
   const isCur = $derived(current()?.id === track.id);
 </script>
 
-<div class="card" class:cur={isCur}>
+<div class="card" class:cur={isCur} onmouseenter={() => hoverStart(track.url)} onmouseleave={hoverEnd} role="group">
   <div class="art">
-    <Cover src={track.thumb} size="100%" radius={8} />
+    <Cover src={track.thumb} size="100%" radius={10} />
     <div class="hover"></div>
     <button class="play" onclick={() => playNow(track)} aria-label="Играть «{track.title}»">
       {#if isCur && ps.playing}<Bars size={14} />{:else}<Icon name="play" size={16} />{/if}
@@ -35,12 +36,13 @@
   .art {
     position: relative;
     aspect-ratio: 1;
-    border-radius: 8px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
   }
   .hover {
     position: absolute;
     inset: 0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: rgba(0, 0, 0, 0.25);
     opacity: 0;
     transition: opacity 0.15s;
@@ -51,10 +53,10 @@
   }
   .play {
     position: absolute;
-    left: 10px;
-    bottom: 10px;
-    width: 38px;
-    height: 38px;
+    left: 12px;
+    bottom: 12px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: grid;
     place-items: center;
@@ -78,10 +80,10 @@
   }
   .add {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 28px;
-    height: 28px;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
     border-radius: 7px;
     display: grid;
     place-items: center;
@@ -100,13 +102,13 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-top: 9px;
+    margin-top: var(--s3);
     font-weight: 550;
     min-width: 0;
   }
   .artist {
     color: var(--muted);
-    font-size: 12.5px;
-    margin-top: 1px;
+    font-size: 13px;
+    margin-top: 3px;
   }
 </style>

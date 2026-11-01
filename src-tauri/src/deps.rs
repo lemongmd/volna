@@ -20,6 +20,11 @@ const DENO_FILE: &str = "deno.exe";
 #[cfg(not(windows))]
 const DENO_FILE: &str = "deno";
 
+/// Папка с распакованной (onedir) сборкой yt-dlp для Windows: она стартует
+/// заметно быстрее однофайловой, которая распаковывает себя при каждом запуске.
+const YTDLP_DIR: &str = "yt-dlp-win";
+const YTDLP_WIN_ZIP: &str = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_win.zip";
+
 fn ytdlp_url() -> &'static str {
     if cfg!(windows) {
         "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
@@ -52,7 +57,15 @@ fn which(name: &str) -> Option<PathBuf> {
         .find(|p| p.is_file())
 }
 
+fn ytdlp_fast_path(state: &AppState) -> Option<PathBuf> {
+    let p = state.bin_dir.join(YTDLP_DIR).join(YTDLP_FILE);
+    p.is_file().then_some(p)
+}
+
 pub fn ytdlp_path(state: &AppState) -> Option<PathBuf> {
+    if let Some(p) = ytdlp_fast_path(state) {
+        return Some(p);
+    }
     let local = state.bin_dir.join(YTDLP_FILE);
     if local.is_file() {
         return Some(local);
@@ -97,6 +110,8 @@ pub fn ytdlp_command(state: &AppState) -> Result<tokio::process::Command, String
 #[derive(Serialize)]
 pub struct DepsStatus {
     ytdlp: bool,
+    /// Быстрая (распакованная) сборка yt-dlp. Вне Windows всегда true.
+    fast: bool,
     deno: bool,
     version: Option<String>,
 }
@@ -105,6 +120,7 @@ pub struct DepsStatus {
 pub async fn deps_status(state: State<'_, AppState>) -> Result<DepsStatus, String> {
     let state = state.inner().clone();
     let ytdlp = ytdlp_path(&state).is_some();
+    let fast = !cfg!(windows) || ytdlp_fast_path(&state).is_some();
     let deno = deno_path(&state).is_some();
     let mut version = None;
     if ytdlp {
@@ -122,6 +138,7 @@ pub async fn deps_status(state: State<'_, AppState>) -> Result<DepsStatus, Strin
     }
     Ok(DepsStatus {
         ytdlp,
+        fast,
         deno,
         version,
     })
@@ -203,12 +220,70 @@ fn extract_deno(zip_path: &Path, dest: &Path) -> Result<(), String> {
     Ok(())
 }
 
+/// Распаковывает весь архив в `dest` (через временную папку, чтобы не оставить
+/// полусобранный движок при ошибке).
+fn extract_all(zip_path: &Path, dest: &Path) -> Result<(), String> {
+    let file = std::fs::File::open(zip_path).map_err(|e| e.to_string())?;
+    let mut archive = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
+    let tmp = dest.with_extension("tmp");
+    let _ = std::fs::remove_dir_all(&tmp);
+    std::fs::create_dir_all(&tmp).map_err(|e| e.to_string())?;
+    for i in 0..archive.len() {
+        let mut entry = archive.by_index(i).map_err(|e| e.to_string())?;
+        let Some(rel) = entry.enclosed_name() else { continue };
+        let out = tmp.join(rel);
+        if entry.is_dir() {
+            std::fs::create_dir_all(&out).map_err(|e| e.to_string())?;
+            continue;
+        }
+        if let Some(parent) = out.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+        let mut f = std::fs::File::create(&out).map_err(|e| e.to_string())?;
+        std::io::copy(&mut entry, &mut f).map_err(|e| e.to_string())?;
+    }
+    // В архиве yt-dlp.exe может лежать в корне или во вложенной папке.
+    let root = if tmp.join(YTDLP_FILE).is_file() {
+        tmp.clone()
+    } else {
+        std::fs::read_dir(&tmp)
+            .map_err(|e| e.to_string())?
+            .filter_map(|e| e.ok())
+            .map(|e| e.path())
+            .find(|p| p.join(YTDLP_FILE).is_file())
+            .ok_or("В архиве нет yt-dlp.exe")?
+    };
+    let _ = std::fs::remove_dir_all(dest);
+    std::fs::rename(&root, dest).map_err(|e| e.to_string())?;
+    let _ = std::fs::remove_dir_all(&tmp);
+    Ok(())
+}
+
+/// Ставит быструю сборку yt-dlp (только Windows).
+async fn install_fast_ytdlp(app: &AppHandle, state: &AppState) -> Result<(), String> {
+    let zip_path = state.bin_dir.join("yt-dlp_win.zip");
+    download(app, state, YTDLP_WIN_ZIP, &zip_path, "yt-dlp").await?;
+    let dest = state.bin_dir.join(YTDLP_DIR);
+    let zp = zip_path.clone();
+    let res = tauri::async_runtime::spawn_blocking(move || extract_all(&zp, &dest))
+        .await
+        .map_err(|e| e.to_string())?;
+    let _ = std::fs::remove_file(zip_path);
+    res
+}
+
 /// Скачивает недостающие компоненты. Прогресс шлётся событием `deps-progress`.
 #[tauri::command]
 pub async fn install_deps(app: AppHandle, state: State<'_, AppState>) -> Result<(), String> {
     let state = state.inner().clone();
     std::fs::create_dir_all(&state.bin_dir).map_err(|e| e.to_string())?;
 
+    if cfg!(windows) && ytdlp_fast_path(&state).is_none() {
+        // Если быстрая сборка не скачалась — откатываемся на обычный yt-dlp.exe.
+        if install_fast_ytdlp(&app, &state).await.is_ok() {
+            let _ = std::fs::remove_file(state.bin_dir.join(YTDLP_FILE));
+        }
+    }
     if ytdlp_path(&state).is_none() {
         let dest = state.bin_dir.join(YTDLP_FILE);
         download(&app, &state, ytdlp_url(), &dest, "yt-dlp").await?;
@@ -231,6 +306,11 @@ pub async fn install_deps(app: AppHandle, state: State<'_, AppState>) -> Result<
 #[tauri::command]
 pub async fn update_engine(app: AppHandle, state: State<'_, AppState>) -> Result<String, String> {
     let state = state.inner().clone();
+    if cfg!(windows) && (ytdlp_fast_path(&state).is_some() || state.bin_dir.join(YTDLP_FILE).is_file()) {
+        install_fast_ytdlp(&app, &state).await?;
+        let _ = std::fs::remove_file(state.bin_dir.join(YTDLP_FILE));
+        return Ok("yt-dlp обновлён".into());
+    }
     let local = state.bin_dir.join(YTDLP_FILE);
     if local.is_file() {
         // Перекачиваем свежий бинарник — надёжнее, чем `yt-dlp -U`.

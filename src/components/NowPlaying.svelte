@@ -146,10 +146,10 @@
   .now {
     display: grid;
     grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
-    gap: 48px;
+    gap: var(--s7);
     align-items: start;
-    padding: 12px 8px 0;
-    height: calc(100vh - 150px);
+    padding: 0;
+    height: calc(100vh - 170px);
   }
   .left {
     display: flex;
@@ -163,8 +163,8 @@
   .title-row {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    margin-top: 18px;
+    gap: var(--s3);
+    margin-top: var(--s5);
   }
   .meta {
     flex: 1;
@@ -193,7 +193,7 @@
     margin-top: 4px;
   }
   .prog {
-    margin-top: 16px;
+    margin-top: var(--s5);
   }
   .times {
     display: flex;
@@ -243,14 +243,14 @@
   .right {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--s4);
     min-width: 0;
     height: 100%;
     min-height: 0;
   }
   .tabs {
     display: flex;
-    gap: 6px;
+    gap: var(--s2);
   }
   .pane {
     flex: 1;
@@ -261,7 +261,7 @@
     overflow-y: auto;
   }
   .box {
-    padding: 14px;
+    padding: var(--s4) var(--s5);
   }
   .box-head {
     display: flex;

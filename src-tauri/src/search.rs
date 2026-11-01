@@ -19,7 +19,7 @@ pub struct Track {
     pub explicit: bool,
 }
 
-const YTM_VERSION: &str = "1.20250929.03.00";
+pub(crate) const YTM_VERSION: &str = "1.20250929.03.00";
 const YT_VERSION: &str = "2.20250929.01.00";
 
 #[tauri::command]
@@ -42,7 +42,7 @@ pub async fn search(state: State<'_, AppState>, query: String, source: String) -
 
 // ---------- общие помощники ----------
 
-fn text_of(v: &Value) -> String {
+pub(crate) fn text_of(v: &Value) -> String {
     if let Some(s) = v["simpleText"].as_str() {
         return s.to_string();
     }
@@ -74,7 +74,7 @@ fn is_duration(s: &str) -> bool {
 
 /// Рекурсивно собирает все объекты с заданным ключом — так парсер не ломается,
 /// когда YouTube переставляет обёртки в ответе.
-fn collect<'a>(v: &'a Value, key: &str, out: &mut Vec<&'a Value>) {
+pub(crate) fn collect<'a>(v: &'a Value, key: &str, out: &mut Vec<&'a Value>) {
     match v {
         Value::Object(m) => {
             for (k, val) in m {

@@ -7,7 +7,7 @@ mod ytdlp;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use tauri::Manager;
@@ -38,8 +38,7 @@ pub struct Inner {
     pub bin_dir: PathBuf,
     pub cache_dir: PathBuf,
     pub ytdlp_cache: PathBuf,
-    http: RwLock<reqwest::Client>,
-    pub proxy: RwLock<Option<String>>,
+    http: reqwest::Client,
     pub streams: Mutex<HashMap<String, StreamEntry>>,
     pub locks: Mutex<HashMap<String, Arc<tokio::sync::Mutex<()>>>>,
     pub sc_client_id: Mutex<Option<String>>,
@@ -57,34 +56,20 @@ impl std::ops::Deref for AppState {
 }
 
 impl Inner {
-    /// HTTP-клиент (с прокси, если он задан в настройках). Клонировать дёшево.
+    /// Общий HTTP-клиент. Клонировать дёшево.
     pub fn http(&self) -> reqwest::Client {
-        self.http.read().unwrap().clone()
+        self.http.clone()
     }
 }
 
-pub fn build_client(proxy: Option<&str>) -> Result<reqwest::Client, String> {
-    let mut b = reqwest::Client::builder()
+pub fn build_client() -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
         .user_agent(UA)
         .connect_timeout(Duration::from_secs(10))
-        .timeout(Duration::from_secs(60));
-    if let Some(p) = proxy {
-        b = b.proxy(reqwest::Proxy::all(p).map_err(|e| format!("Неверный адрес прокси: {e}"))?);
-    }
-    b.build().map_err(|e| e.to_string())
-}
-
-/// Прокси для поиска, yt-dlp и стриминга (например, если YouTube замедлен).
-#[tauri::command]
-fn set_proxy(state: tauri::State<'_, AppState>, proxy: String) -> Result<(), String> {
-    let p = proxy.trim();
-    let p = if p.is_empty() { None } else { Some(p.to_string()) };
-    let client = build_client(p.as_deref())?;
-    *state.http.write().unwrap() = client;
-    *state.proxy.write().unwrap() = p;
-    // ссылки на потоки привязаны к IP — после смены прокси их нужно получить заново
-    state.streams.lock().unwrap().clear();
-    Ok(())
+        .timeout(Duration::from_secs(60))
+        .pool_max_idle_per_host(8)
+        .build()
+        .map_err(|e| e.to_string())
 }
 
 pub const UA: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36";
@@ -106,14 +91,13 @@ pub fn run() {
                 let _ = std::fs::create_dir_all(d);
             }
 
-            let http = build_client(None)?;
+            let http = build_client()?;
 
             app.manage(AppState(Arc::new(Inner {
                 bin_dir,
                 cache_dir,
                 ytdlp_cache,
-                http: RwLock::new(http),
-                proxy: RwLock::new(None),
+                http,
                 streams: Mutex::new(HashMap::new()),
                 locks: Mutex::new(HashMap::new()),
                 sc_client_id: Mutex::new(None),
@@ -134,7 +118,6 @@ pub fn run() {
             });
         })
         .invoke_handler(tauri::generate_handler![
-            set_proxy,
             deps::deps_status,
             deps::install_deps,
             deps::update_engine,

@@ -1,4 +1,5 @@
 import { mount } from 'svelte';
+import '@fontsource-variable/geist/wght.css';
 import './app.css';
 import App from './App.svelte';
 import { persist } from './lib/state.svelte';

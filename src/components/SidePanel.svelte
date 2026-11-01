@@ -198,7 +198,7 @@
   .panel {
     width: 340px;
     flex: none;
-    margin-top: 44px;
+    margin-top: var(--s7);
     border-radius: var(--r-lg);
     display: flex;
     flex-direction: column;
@@ -209,8 +209,8 @@
   .tabs {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 8px;
+    gap: var(--s1);
+    padding: var(--s2) var(--s3);
     border-bottom: 1px solid var(--stroke);
   }
   .tab {
@@ -244,7 +244,7 @@
   .q-head {
     display: flex;
     align-items: center;
-    padding: 6px 8px 2px 14px;
+    padding: var(--s3) var(--s3) var(--s1) var(--s4);
     font-size: 12.5px;
   }
   .grow {
@@ -253,7 +253,7 @@
   .scroll {
     flex: 1;
     overflow-y: auto;
-    padding: 4px 6px 10px;
+    padding: var(--s1) var(--s2) var(--s3);
   }
   .q-row {
     display: grid;
@@ -431,7 +431,7 @@
     text-align: center;
   }
   .rc-code {
-    font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
     font-size: 28px;
     font-weight: 700;
     letter-spacing: 0.14em;

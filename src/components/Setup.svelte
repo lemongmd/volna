@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import Icon from './Icon.svelte';
-  import { profile, settings, ui } from '../lib/state.svelte';
+  import { profile, ui } from '../lib/state.svelte';
   import { api, type DepsProgress } from '../lib/api';
   import { errText } from '../lib/util';
 
@@ -19,10 +19,9 @@
     let unlisten: (() => void) | undefined;
     (async () => {
       try {
-        if (settings.proxy) await api.setProxy(settings.proxy).catch(() => {});
         unlisten = await api.onDepsProgress((p) => (progress = p));
         const st = await api.depsStatus();
-        needInstall = !st.ytdlp || !st.deno;
+        needInstall = !st.ytdlp || !st.deno || !st.fast;
       } catch {
         // не в Tauri (просто браузер) — пропускаем установку
         needInstall = false;

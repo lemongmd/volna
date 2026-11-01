@@ -159,7 +159,7 @@
     {:else}
       <div class="state col">
         <Icon name="lyrics" size={28} />
-        <p>{error ? `Не получилось найти текст: ${error}` : 'Для этого трека текста пока нет.'}</p>
+        <p>{error || 'Для этого трека текста пока нет.'}</p>
         <p class="muted small">Можно загрузить свой .lrc-файл (текст с таймкодами) — он сохранится для этого трека.</p>
         <div class="row">
           <button class="btn btn-primary" onclick={() => fileInput?.click()}><Icon name="upload" size={14} /> Загрузить .lrc</button>
@@ -171,7 +171,7 @@
 
   {#if data}
     <div class="toolbar">
-      <span class="src">{data.source === 'custom' ? 'Свой текст' : 'LRCLIB'}</span>
+      <span class="src">{data.source === 'custom' ? 'Свой текст' : data.source === 'ytm' ? 'YouTube Music' : 'LRCLIB'}</span>
       {#if data.lines}
         <span class="offset" title="Сдвиг текста относительно музыки">
           <button onclick={() => shift(-0.5)} aria-label="Текст раньше"><Icon name="dash" size={14} /></button>

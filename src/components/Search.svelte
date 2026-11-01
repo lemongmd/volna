@@ -145,17 +145,17 @@
 
 <style>
   .head {
-    margin: 8px 0 18px;
+    margin: 0 0 var(--s5);
   }
   .bar {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-top: 14px;
+    gap: var(--s3);
+    margin-top: var(--s5);
   }
   .sources {
     display: flex;
-    gap: 6px;
+    gap: var(--s2);
     flex: none;
   }
   .field {
@@ -164,8 +164,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 34px;
-    padding: 0 10px;
+    height: 36px;
+    padding: 0 var(--s3);
     border-radius: var(--r-sm);
     background: rgba(255, 255, 255, 0.07);
     color: var(--muted);
@@ -204,14 +204,14 @@
   .results-head {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: var(--s2);
+    margin-bottom: var(--s4);
   }
   .grow {
     flex: 1;
   }
   .list {
-    padding: 6px;
+    padding: var(--s2);
   }
   .state {
     padding: 60px 20px;
@@ -225,8 +225,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    height: 52px;
-    padding: 0 12px 0 48px;
+    height: 58px;
+    padding: 0 var(--s4) 0 52px;
   }
   .sk-c {
     width: 38px;

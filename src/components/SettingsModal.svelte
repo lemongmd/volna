@@ -9,22 +9,6 @@
   import { COLORS, errText } from '../lib/util';
 
   let name = $state(profile.name);
-  let proxy = $state(settings.proxy);
-  let proxyState = $state<'' | 'ok' | 'err'>('');
-
-  async function applyProxy() {
-    const v = proxy.trim();
-    if (v === settings.proxy) return;
-    try {
-      await api.setProxy(v);
-      settings.proxy = v;
-      proxyState = 'ok';
-      toast(v ? 'Прокси включён' : 'Прокси выключен');
-    } catch (e) {
-      proxyState = 'err';
-      toast(errText(e), 'error');
-    }
-  }
   let status = $state<DepsStatus | null>(null);
   let updating = $state(false);
 
@@ -33,7 +17,6 @@
   });
 
   function close() {
-    void applyProxy();
     const n = name.trim().slice(0, 24);
     if (n && n !== profile.name) {
       profile.name = n;
@@ -104,7 +87,7 @@
         <div class="t">yt-dlp {status?.version ?? ''}</div>
         <div class="muted s">
           {#if status}
-            {status.ytdlp ? 'Установлен' : 'Не установлен'} · JS-рантайм {status.deno ? 'есть' : 'не найден'}
+            {status.ytdlp ? (status.fast ? 'Установлен' : 'Установлен (медленная сборка — нажми «Обновить»)') : 'Не установлен'} · JS-рантайм {status.deno ? 'есть' : 'не найден'}
           {:else}
             Проверяем…
           {/if}
@@ -116,22 +99,6 @@
       </button>
     </div>
     <p class="muted s">Если YouTube перестал играть — нажми «Обновить»: YouTube часто меняет защиту, и yt-dlp быстро выпускает фиксы.</p>
-  </section>
-
-  <section>
-    <h3>Прокси</h3>
-    <input
-      class="input"
-      class:bad={proxyState === 'err'}
-      bind:value={proxy}
-      onchange={applyProxy}
-      placeholder="Без прокси"
-      spellcheck="false"
-    />
-    <p class="muted s">
-      Если YouTube тормозит или не открывается — укажи прокси, например <code>socks5://127.0.0.1:1080</code> или
-      <code>http://127.0.0.1:2080</code>. Через него пойдут поиск, загрузка и сам звук. Комнаты работают и без него.
-    </p>
   </section>
 
   <section>
@@ -256,9 +223,6 @@
     background: rgba(255, 255, 255, 0.08);
     padding: 1px 5px;
     border-radius: 5px;
-  }
-  .input.bad {
-    border-color: var(--danger);
   }
   .danger {
     padding-bottom: 0;

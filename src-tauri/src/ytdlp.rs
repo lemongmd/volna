@@ -50,9 +50,6 @@ pub async fn run(state: &AppState, args: &[&str], timeout_s: u64) -> Result<Stri
         .arg("utf-8")
         .arg("--cache-dir")
         .arg(&state.ytdlp_cache);
-    if let Some(p) = state.proxy.read().unwrap().clone() {
-        cmd.arg("--proxy").arg(p);
-    }
     cmd.args(args);
     let out = tokio::time::timeout(Duration::from_secs(timeout_s), cmd.output())
         .await
@@ -81,6 +78,57 @@ fn lock_for(state: &AppState, key: &str) -> Arc<tokio::sync::Mutex<()>> {
         .clone()
 }
 
+fn is_youtube(url: &str) -> bool {
+    url.starts_with("ytsearch") || url.contains("youtube.com/") || url.contains("youtu.be/")
+}
+
+/// Один запрос к yt-dlp: прямая ссылка на аудио + заголовки.
+async fn probe_with(state: &AppState, url: &str, extra: &[&str], timeout: u64) -> Result<Value, String> {
+    let mut args: Vec<&str> = vec![
+        "--no-playlist",
+        "--playlist-items",
+        "1",
+        "--socket-timeout",
+        "10",
+        "-f",
+        FORMAT,
+        "--print",
+        "%(.{url,http_headers,duration,ext,protocol,format_id})j",
+    ];
+    args.extend_from_slice(extra);
+    args.push("--");
+    args.push(url);
+    let out = run(state, &args, timeout).await?;
+    let line = out
+        .lines()
+        .find(|l| l.trim_start().starts_with('{'))
+        .ok_or("yt-dlp не вернул поток")?;
+    let info: Value = serde_json::from_str(line).map_err(|e| e.to_string())?;
+    if info["url"].as_str().unwrap_or_default().is_empty() {
+        return Err("yt-dlp не вернул ссылку на поток".into());
+    }
+    Ok(info)
+}
+
+/// Для YouTube сначала пробуем клиент android_vr: он отдаёт прямые ссылки без
+/// JS-проверки, поэтому yt-dlp не скачивает плеер и не запускает Deno —
+/// это экономит несколько секунд. Не вышло — обычный путь.
+async fn probe(state: &AppState, url: &str) -> Result<Value, String> {
+    if is_youtube(url) {
+        let fast = probe_with(
+            state,
+            url,
+            &["--extractor-args", "youtube:player_client=android_vr;player_skip=webpage,configs"],
+            25,
+        )
+        .await;
+        if let Ok(v) = fast {
+            return Ok(v);
+        }
+    }
+    probe_with(state, url, &[], 90).await
+}
+
 /// Достаёт поток для страницы трека и кладёт в кэш. Возвращает ключ для
 /// протокола `stream://`.
 pub async fn resolve_inner(state: &AppState, url: &str, force: bool) -> Result<StreamEntry, String> {
@@ -100,27 +148,7 @@ pub async fn resolve_inner(state: &AppState, url: &str, force: bool) -> Result<S
         }
     }
 
-    let out = run(
-        state,
-        &[
-            "--no-playlist",
-            "--playlist-items",
-            "1",
-            "-f",
-            FORMAT,
-            "--print",
-            "%(.{url,http_headers,duration,ext,protocol,format_id})j",
-            "--",
-            url,
-        ],
-        90,
-    )
-    .await?;
-    let line = out
-        .lines()
-        .find(|l| l.trim_start().starts_with('{'))
-        .ok_or("yt-dlp не вернул поток")?;
-    let info: Value = serde_json::from_str(line).map_err(|e| e.to_string())?;
+    let info = probe(state, url).await?;
 
     let stream_url = info["url"].as_str().unwrap_or_default().to_string();
     let protocol = info["protocol"].as_str().unwrap_or_default().to_string();

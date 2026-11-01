@@ -142,7 +142,7 @@
     border: 1px solid transparent;
     outline: none;
     text-align: center;
-    font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
     font-size: 20px;
     font-weight: 700;
     letter-spacing: 0.3em;

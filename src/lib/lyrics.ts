@@ -16,7 +16,7 @@ export interface LyricsData {
   lines: Line[] | null;
   plain: string | null;
   instrumental: boolean;
-  source: 'lrclib' | 'custom';
+  source: 'lrclib' | 'ytm' | 'custom';
 }
 
 const cache = new Map<string, LyricsData | null>();
@@ -84,12 +84,13 @@ export async function getLyrics(t: Track, force = false): Promise<LyricsData | n
   if (!force && cache.has(t.id)) return cache.get(t.id)!;
   if (!force && pending.has(t.id)) return pending.get(t.id)!;
   const p = api
-    .lyrics(t.title, t.artist, t.duration)
+    .lyrics(t.title, t.artist, t.duration, t.url)
     .then((r) => {
       let data: LyricsData | null = null;
-      if (r?.synced) data = fromText(r.synced, 'lrclib');
-      else if (r?.plain) data = { lines: null, plain: r.plain.trim(), instrumental: false, source: 'lrclib' };
-      else if (r?.instrumental) data = { lines: null, plain: null, instrumental: true, source: 'lrclib' };
+      const source = r?.source === 'YouTube Music' ? 'ytm' : 'lrclib';
+      if (r?.synced) data = fromText(r.synced, source);
+      else if (r?.plain) data = { lines: null, plain: r.plain.trim(), instrumental: false, source };
+      else if (r?.instrumental) data = { lines: null, plain: null, instrumental: true, source };
       cache.set(t.id, data);
       return data;
     })

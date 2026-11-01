@@ -124,7 +124,7 @@
     min-width: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 44px 24px 28px 20px;
+    padding: var(--s7) var(--s6) var(--s6) var(--s5);
     container-type: inline-size;
   }
   .view {

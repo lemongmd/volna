@@ -6,6 +6,7 @@
   import { addToQueue, playNext, playNow } from '../lib/sync';
   import type { Track } from '../lib/types';
   import { fmtTime } from '../lib/util';
+  import { hoverEnd, hoverStart } from '../lib/prefetch';
 
   let { track, index }: { track: Track; index?: number } = $props();
 
@@ -13,7 +14,14 @@
   const SRC: Record<string, string> = { ytm: 'YT Music', yt: 'YouTube', sc: 'SoundCloud', link: 'Ссылка' };
 </script>
 
-<div class="row" class:cur={isCur} ondblclick={() => playNow(track)} role="listitem">
+<div
+  class="row"
+  class:cur={isCur}
+  ondblclick={() => playNow(track)}
+  onmouseenter={() => hoverStart(track.url)}
+  onmouseleave={hoverEnd}
+  role="listitem"
+>
   <div class="num">
     {#if isCur}
       <Bars playing={ps.playing} size={12} />
@@ -22,7 +30,7 @@
     {/if}
     <button class="row-play" onclick={() => playNow(track)} aria-label="Играть"><Icon name="play" size={14} /></button>
   </div>
-  <Cover src={track.thumb} size={38} radius={6} />
+  <Cover src={track.thumb} size={40} radius={6} />
   <div class="meta">
     <div class="title">
       {#if track.explicit}<span class="badge-e" title="Explicit — без цензуры">E</span>{/if}
@@ -45,11 +53,11 @@
 <style>
   .row {
     display: grid;
-    grid-template-columns: 28px 38px minmax(0, 1fr) 84px 72px 44px;
+    grid-template-columns: 28px 40px minmax(0, 1fr) 84px 72px 44px;
     align-items: center;
-    gap: 12px;
-    height: 52px;
-    padding: 0 12px 0 8px;
+    gap: var(--s4);
+    height: 58px;
+    padding: 0 var(--s4) 0 var(--s2);
     border-radius: 10px;
     transition: background 0.12s;
   }
@@ -94,7 +102,8 @@
   }
   .artist {
     color: var(--muted);
-    font-size: 12.5px;
+    font-size: 13px;
+    margin-top: 2px;
   }
   .src {
     font-size: 11px;

@@ -21,9 +21,19 @@
   --r: 12px;
   --r-lg: 16px;
 
+  /* шкала отступов */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+
   color-scheme: dark;
-  font-family: 'Segoe UI Variable Text', 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Geist Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
   font-size: 14px;
+  font-feature-settings: 'ss01', 'tnum' 0;
   line-height: 1.4;
   color: var(--text);
   background: var(--bg);
@@ -242,7 +252,8 @@ img {
 }
 
 .mono {
-  font-family: 'Cascadia Mono', ui-monospace, Consolas, monospace;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ───── анимации ───── */
