@@ -1,0 +1,29 @@
+[package]
+name = "volna"
+version = "0.1.0"
+description = "Волна — слушайте музыку вместе с друзьями"
+authors = ["volna"]
+edition = "2021"
+
+[lib]
+name = "volna_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["process", "fs", "io-util", "sync", "time", "macros"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "http2", "socks"] }
+zip = { version = "2", default-features = false, features = ["deflate"] }
+urlencoding = "2"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
