@@ -300,7 +300,7 @@ async fn sc_client_id(state: &AppState, refresh: bool) -> Result<String, String>
     Err("Не удалось получить ключ SoundCloud".into())
 }
 
-async fn sc_search(state: &AppState, q: &str) -> Result<Vec<Track>, String> {
+pub(crate) async fn sc_search(state: &AppState, q: &str) -> Result<Vec<Track>, String> {
     let mut last_err = String::new();
     for attempt in 0..2 {
         let cid = sc_client_id(state, attempt > 0).await?;

@@ -11,7 +11,7 @@
   const isCur = $derived(current()?.id === track.id);
 </script>
 
-<div class="card" class:cur={isCur} onmouseenter={() => hoverStart(track.url)} onmouseleave={hoverEnd} role="group">
+<div class="card" class:cur={isCur} onmouseenter={() => hoverStart(track)} onmouseleave={hoverEnd} role="group">
   <div class="art">
     <Cover src={track.thumb} size="100%" radius={10} />
     <div class="hover"></div>

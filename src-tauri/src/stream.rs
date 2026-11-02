@@ -97,7 +97,7 @@ pub async fn serve(state: AppState, req: Request<Vec<u8>>) -> Response<Vec<u8>> 
                     && attempt == 0
                 {
                     // Ссылка протухла — достаём свежую и пробуем ещё раз.
-                    if ytdlp::resolve_inner(&state, &entry.page_url, true).await.is_ok() {
+                    if ytdlp::refresh(&state, &key).await.is_ok() {
                         continue;
                     }
                 }

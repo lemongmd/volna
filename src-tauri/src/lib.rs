@@ -27,7 +27,10 @@ pub enum StreamKind {
 
 #[derive(Clone, Debug)]
 pub struct StreamEntry {
+    /// Страница, с которой реально берётся звук (оригинал или найденная замена).
     pub page_url: String,
+    /// Откуда взята замена, если оригинал недоступен в регионе («YouTube»/«SoundCloud»).
+    pub substitute: Option<String>,
     pub kind: StreamKind,
     pub mime: String,
     pub duration: f64,

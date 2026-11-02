@@ -18,7 +18,7 @@
   class="row"
   class:cur={isCur}
   ondblclick={() => playNow(track)}
-  onmouseenter={() => hoverStart(track.url)}
+  onmouseenter={() => hoverStart(track)}
   onmouseleave={hoverEnd}
   role="listitem"
 >

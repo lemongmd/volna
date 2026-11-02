@@ -112,9 +112,10 @@ async function load(c: QItem, force = false) {
   pl.pos = 0;
   audio.pause();
   try {
-    const r = await api.resolve(c.url, force);
+    const r = await api.resolve(c.url, force, c);
     if (loadingQid !== c.qid) return;
     if (r.duration && !c.duration) pl.dur = r.duration;
+    if (r.substitute) toast(`«${c.title}» недоступен в твоём регионе — играет копия с ${r.substitute}`);
     loadedQid = c.qid;
     audio.src = api.streamUrl(r.key);
     await waitMeta();
@@ -142,7 +143,7 @@ async function load(c: QItem, force = false) {
 /** Заранее достаём ссылку на следующий трек — переключение будет мгновенным. */
 function prefetch() {
   const next = ps.queue[ps.index + 1];
-  if (next) api.resolve(next.url).catch(() => {});
+  if (next) api.resolve(next.url, false, next).catch(() => {});
 }
 
 function onError() {

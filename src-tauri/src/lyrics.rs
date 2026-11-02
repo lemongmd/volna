@@ -23,7 +23,7 @@ pub struct Lyrics {
 }
 
 /// Убирает из названия «(Official Video)», «[Lyrics]», «| Премьера клипа» и т.п.
-fn clean_title(s: &str) -> String {
+pub(crate) fn clean_title(s: &str) -> String {
     let mut out = String::new();
     let mut depth = 0i32;
     for c in s.chars() {

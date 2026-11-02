@@ -6,7 +6,7 @@ use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::State;
 
@@ -129,27 +129,82 @@ async fn probe(state: &AppState, url: &str) -> Result<Value, String> {
     probe_with(state, url, &[], 90).await
 }
 
-/// Достаёт поток для страницы трека и кладёт в кэш. Возвращает ключ для
-/// протокола `stream://`.
-pub async fn resolve_inner(state: &AppState, url: &str, force: bool) -> Result<StreamEntry, String> {
-    let key = key_for(url);
-    let lock = lock_for(state, &key);
-    let _guard = lock.lock().await;
+/// Название и исполнитель трека — чтобы найти замену, если оригинал недоступен.
+#[derive(Deserialize, Clone, Default)]
+pub struct AltHint {
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub artist: String,
+    #[serde(default)]
+    pub duration: f64,
+}
 
-    if !force {
-        if let Some(e) = state.streams.lock().unwrap().get(&key) {
-            let alive = match &e.kind {
-                StreamKind::File(p) => p.is_file(),
-                StreamKind::Remote { .. } => e.created.elapsed() < STREAM_TTL,
-            };
-            if alive {
-                return Ok(e.clone());
+/// Ошибки «видео недоступно / заблокировано в вашей стране / удалено».
+fn is_unavailable(err: &str) -> bool {
+    let e = err.to_lowercase();
+    [
+        "unavailable",
+        "not available",
+        "blocked",
+        "country",
+        "region",
+        "copyright",
+        "has been removed",
+        "private video",
+        "terminated",
+        "who has blocked",
+    ]
+    .iter()
+    .any(|m| e.contains(m))
+}
+
+/// Оригинал недоступен (чаще всего — заблокирован правообладателем в регионе).
+/// Ищем другую копию того же трека: сначала другие загрузки на YouTube,
+/// потом SoundCloud. Берём только варианты с близкой длительностью.
+async fn find_substitute(state: &AppState, orig_url: &str, hint: &AltHint) -> Result<(String, Value, &'static str), String> {
+    let title = crate::lyrics::clean_title(&hint.title);
+    let query = format!("{} {}", hint.artist.trim(), title).trim().to_string();
+    if query.is_empty() {
+        return Err("нечего искать".into());
+    }
+    let close = |d: f64| hint.duration <= 0.0 || d <= 0.0 || (d - hint.duration).abs() <= 20.0;
+
+    // 1) другие загрузки на YouTube
+    let search = format!("ytsearch8:{query}");
+    if let Ok(out) = run(state, &["--flat-playlist", "-J", "--", &search], 40).await {
+        if let Ok(v) = serde_json::from_str::<Value>(out.trim()) {
+            let mut tried = 0;
+            for e in v["entries"].as_array().cloned().unwrap_or_default() {
+                let Some(id) = e["id"].as_str() else { continue };
+                if orig_url.contains(id) || !close(e["duration"].as_f64().unwrap_or(0.0)) {
+                    continue;
+                }
+                let url = format!("https://www.youtube.com/watch?v={id}");
+                if let Ok(info) = probe(state, &url).await {
+                    return Ok((url, info, "YouTube"));
+                }
+                tried += 1;
+                if tried >= 3 {
+                    break;
+                }
             }
         }
     }
 
-    let info = probe(state, url).await?;
+    // 2) SoundCloud
+    if let Ok(tracks) = crate::search::sc_search(state, &query).await {
+        for t in tracks.into_iter().filter(|t| close(t.duration)).take(2) {
+            if let Ok(info) = probe_with(state, &t.url, &[], 60).await {
+                return Ok((t.url, info, "SoundCloud"));
+            }
+        }
+    }
+    Err("Трек недоступен в твоём регионе, и другую копию найти не удалось".into())
+}
 
+/// Из ответа yt-dlp — откуда и как отдавать звук.
+async fn make_stream(state: &AppState, key: &str, page_url: &str, info: &Value) -> Result<(StreamKind, String, f64), String> {
     let stream_url = info["url"].as_str().unwrap_or_default().to_string();
     let protocol = info["protocol"].as_str().unwrap_or_default().to_string();
     let ext = info["ext"].as_str().unwrap_or("webm").to_string();
@@ -193,7 +248,7 @@ pub async fn resolve_inner(state: &AppState, url: &str, force: bool) -> Result<S
                 "--print",
                 "after_move:filepath",
                 "--",
-                url,
+                page_url,
             ],
             180,
         )
@@ -217,9 +272,41 @@ pub async fn resolve_inner(state: &AppState, url: &str, force: bool) -> Result<S
         StreamKind::Remote { .. } => mime_for(&ext),
     }
     .to_string();
+    Ok((kind, mime, duration))
+}
 
+/// Достаёт поток для страницы трека и кладёт в кэш (ключ — по исходной ссылке,
+/// даже если звук взят с замены).
+pub async fn resolve_inner(state: &AppState, url: &str, force: bool, hint: Option<&AltHint>) -> Result<StreamEntry, String> {
+    let key = key_for(url);
+    let lock = lock_for(state, &key);
+    let _guard = lock.lock().await;
+
+    if !force {
+        if let Some(e) = state.streams.lock().unwrap().get(&key) {
+            let alive = match &e.kind {
+                StreamKind::File(p) => p.is_file(),
+                StreamKind::Remote { .. } => e.created.elapsed() < STREAM_TTL,
+            };
+            if alive {
+                return Ok(e.clone());
+            }
+        }
+    }
+
+    let (page_url, info, substitute) = match probe(state, url).await {
+        Ok(info) => (url.to_string(), info, None),
+        Err(e) if is_unavailable(&e) && hint.is_some() => {
+            let (alt, info, src) = find_substitute(state, url, hint.unwrap()).await?;
+            (alt, info, Some(src.to_string()))
+        }
+        Err(e) => return Err(e),
+    };
+
+    let (kind, mime, duration) = make_stream(state, &key, &page_url, &info).await?;
     let entry = StreamEntry {
-        page_url: url.to_string(),
+        page_url,
+        substitute,
         kind,
         mime,
         duration,
@@ -229,19 +316,46 @@ pub async fn resolve_inner(state: &AppState, url: &str, force: bool) -> Result<S
     Ok(entry)
 }
 
+/// Ссылка на поток протухла — получаем свежую с той же страницы (оригинала
+/// или замены) и кладём под тем же ключом.
+pub async fn refresh(state: &AppState, key: &str) -> Result<(), String> {
+    let old = state.streams.lock().unwrap().get(key).cloned().ok_or("нет в кэше")?;
+    let lock = lock_for(state, key);
+    let _guard = lock.lock().await;
+    let info = probe(state, &old.page_url).await?;
+    let (kind, mime, duration) = make_stream(state, key, &old.page_url, &info).await?;
+    let entry = StreamEntry {
+        kind,
+        mime,
+        duration,
+        created: Instant::now(),
+        ..old
+    };
+    state.streams.lock().unwrap().insert(key.to_string(), entry);
+    Ok(())
+}
+
 #[derive(Serialize)]
 pub struct Resolved {
     key: String,
     duration: f64,
+    /// Если оригинал недоступен — откуда взята замена.
+    substitute: Option<String>,
 }
 
 #[tauri::command]
-pub async fn resolve(state: State<'_, AppState>, url: String, force: Option<bool>) -> Result<Resolved, String> {
+pub async fn resolve(
+    state: State<'_, AppState>,
+    url: String,
+    force: Option<bool>,
+    hint: Option<AltHint>,
+) -> Result<Resolved, String> {
     let state = state.inner().clone();
-    let entry = resolve_inner(&state, &url, force.unwrap_or(false)).await?;
+    let entry = resolve_inner(&state, &url, force.unwrap_or(false), hint.as_ref()).await?;
     Ok(Resolved {
         key: key_for(&url),
         duration: entry.duration,
+        substitute: entry.substitute,
     })
 }
 
@@ -473,4 +587,18 @@ async fn spotify(state: &AppState, url: &str) -> Result<Vec<Track>, String> {
             }
         })
         .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_unavailable;
+
+    #[test]
+    fn detects_region_blocks() {
+        assert!(is_unavailable("[youtube] mYNmpS3a1Ag: Video unavailable. This video is not available"));
+        assert!(is_unavailable("The uploader has not made this video available in your country"));
+        assert!(is_unavailable("Video unavailable. This video contains content from X, who has blocked it in your country on copyright grounds"));
+        assert!(!is_unavailable("yt-dlp не ответил вовремя"));
+        assert!(!is_unavailable("Unable to download webpage: timed out"));
+    }
 }
