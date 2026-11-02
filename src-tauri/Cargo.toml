@@ -1,6 +1,6 @@
 [package]
 name = "volna"
-version = "0.1.1"
+version = "0.1.2"
 description = "Волна — слушайте музыку вместе с друзьями"
 authors = ["volna"]
 edition = "2021"
