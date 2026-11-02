@@ -9,6 +9,7 @@
   import i_home from 'bootstrap-icons/icons/house-door.svg?raw';
   import i_homeFill from 'bootstrap-icons/icons/house-door-fill.svg?raw';
   import i_disc from 'bootstrap-icons/icons/disc.svg?raw';
+  import i_nowPlaying from 'bootstrap-icons/icons/play-circle.svg?raw';
   import i_discFill from 'bootstrap-icons/icons/disc-fill.svg?raw';
   import i_users from 'bootstrap-icons/icons/people.svg?raw';
   import i_usersFill from 'bootstrap-icons/icons/people-fill.svg?raw';
@@ -64,6 +65,7 @@
     home: i_home,
     homeFill: i_homeFill,
     disc: i_disc,
+    nowPlaying: i_nowPlaying,
     discFill: i_discFill,
     users: i_users,
     usersFill: i_usersFill,

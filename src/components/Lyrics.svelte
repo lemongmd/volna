@@ -249,23 +249,27 @@
       </span>
       {#if data.lines}
         <span class="offset" title="Сдвиг текста относительно музыки">
-          <button onclick={() => shift(-0.5)} aria-label="Текст раньше"><Icon name="dash" size={14} /></button>
-          <span class="mono">{offset > 0 ? '+' : ''}{offset.toFixed(1)}с</span>
-          <button onclick={() => shift(0.5)} aria-label="Текст позже"><Icon name="plusSm" size={14} /></button>
+          <button class="tb-btn" onclick={() => shift(-0.5)} aria-label="Текст раньше на 0,5 с" title="Текст раньше">
+            <Icon name="dash" size={18} />
+          </button>
+          <span class="mono">{offset > 0 ? '+' : ''}{offset.toFixed(1)} с</span>
+          <button class="tb-btn" onclick={() => shift(0.5)} aria-label="Текст позже на 0,5 с" title="Текст позже">
+            <Icon name="plusSm" size={18} />
+          </button>
         </span>
       {/if}
       <span class="grow"></span>
-      <button class="icon-btn" onclick={() => fileInput?.click()} title="Загрузить свой .lrc" aria-label="Загрузить свой .lrc">
-        <Icon name="upload" size={15} />
+      <button class="tb-btn" onclick={() => fileInput?.click()} title="Загрузить свой .lrc" aria-label="Загрузить свой .lrc">
+        <Icon name="upload" size={18} />
       </button>
       {#if data.source !== 'custom'}
-        <button class="icon-btn" onclick={chooseAnother} title="Не тот текст — выбрать другой" aria-label="Выбрать другой текст">
-          <Icon name="refresh" size={15} />
+        <button class="tb-btn" onclick={chooseAnother} title="Не тот текст — выбрать другой" aria-label="Выбрать другой текст">
+          <Icon name="refresh" size={18} />
         </button>
       {/if}
       {#if data.source === 'custom'}
-        <button class="icon-btn" onclick={removeCustom} title="Убрать свой текст" aria-label="Убрать свой текст">
-          <Icon name="trash" size={15} />
+        <button class="tb-btn" onclick={removeCustom} title="Убрать свой текст" aria-label="Убрать свой текст">
+          <Icon name="trash" size={18} />
         </button>
       {/if}
     </div>
@@ -285,7 +289,7 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 0 12px;
+    padding: 0 var(--s2);
     mask-image: linear-gradient(180deg, transparent 0, #000 12%, #000 80%, transparent 100%);
     scrollbar-width: none;
   }
@@ -301,24 +305,29 @@
   .line {
     display: block;
     width: 100%;
+    max-width: 600px;
+    /* ровные переносы: без одинокого короткого слова на второй строке */
+    text-wrap: balance;
     text-align: left;
-    padding: 10px 12px;
-    margin: 2px 0;
-    border-radius: 12px;
-    font-size: 30px;
+    padding: var(--s2) var(--s2);
+    margin: 0;
+    border-radius: var(--r-sm);
+    font-size: 36px;
     font-weight: 750;
     line-height: 1.2;
     letter-spacing: -0.01em;
     color: #fff;
     opacity: 0.28;
-    filter: blur(calc(var(--d) * 0.45px));
-    transform: scale(0.97);
+    /* лёгкий расфокус дальних строк: читаются, но фокус остаётся на активной */
+    filter: blur(calc(var(--d) * 0.22px));
+    /* неактивные строки меньше активной; через transform — без скачков вёрстки */
+    transform: scale(0.84);
     transform-origin: left center;
     transition:
       opacity 0.45s ease,
       transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
       filter 0.45s ease;
-    word-break: break-word;
+    overflow-wrap: break-word;
   }
   .line.past {
     opacity: 0.22;
@@ -338,8 +347,10 @@
   }
   .dots {
     display: flex;
-    gap: 10px;
-    padding: 18px 14px;
+    gap: var(--s2);
+    padding: var(--s2) var(--s2);
+    min-height: 48px;
+    align-items: center;
     opacity: 0.25;
     transition: opacity 0.4s;
   }
@@ -377,7 +388,7 @@
     font-size: 20px;
     font-weight: 650;
     line-height: 1.5;
-    padding: 24px 12px 80px;
+    padding: var(--s5) var(--s2) 80px;
     color: rgba(255, 255, 255, 0.85);
     user-select: text;
   }
@@ -385,14 +396,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: var(--s2);
     height: 100%;
     color: var(--muted);
   }
   .state.col {
     flex-direction: column;
     text-align: center;
-    padding: 0 20px;
+    padding: 0 var(--s5);
   }
   .state p {
     margin: 0;
@@ -404,71 +415,85 @@
   .row {
     display: flex;
     gap: 8px;
-    margin-top: 10px;
+    margin-top: var(--s4);
   }
   .toolbar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
-    padding: 8px 4px 0;
-    font-size: 12px;
-    color: var(--faint);
+    gap: var(--s2);
+    padding-top: var(--s2);
+    font-size: 13px;
+    color: var(--muted);
   }
   .src {
-    padding: 3px 8px;
-    border-radius: 6px;
-    background: var(--panel);
+    display: inline-flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 var(--s4);
+    border-radius: var(--r-sm);
+    background: var(--panel-2);
+    color: var(--muted);
+    white-space: nowrap;
   }
   .offset {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    padding: 2px;
-    border-radius: 8px;
-    background: var(--panel);
-  }
-  .offset button {
-    width: 24px;
-    height: 22px;
-    display: grid;
-    place-items: center;
-    border-radius: 6px;
-    color: var(--muted);
-  }
-  .offset button:hover {
+    border-radius: var(--r-sm);
     background: var(--panel-2);
-    color: var(--text);
   }
   .offset .mono {
-    min-width: 42px;
+    min-width: 48px;
     text-align: center;
-    color: var(--muted);
+    color: var(--text);
+    font-weight: 600;
+  }
+  /* кнопки панели: область нажатия 40×40, контрастные иконки */
+  .tb-btn {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: var(--r-sm);
+    color: var(--text);
+    transition: background 0.15s;
+  }
+  .tb-btn:hover {
+    background: var(--panel-3);
+  }
+  .toolbar > .tb-btn {
+    background: var(--panel-2);
+  }
+  .toolbar > .tb-btn:hover {
+    background: var(--panel-3);
   }
   .grow {
     flex: 1;
   }
   .ask {
     max-width: 560px;
-    padding: var(--s6) var(--s3) var(--s5);
+    padding: var(--s6) var(--s2) var(--s5);
     animation: fade-in 0.25s ease both;
   }
   .ask-head {
     display: flex;
     align-items: center;
-    gap: var(--s3);
+    gap: var(--s2);
     font-size: 13px;
     color: var(--muted);
   }
   .ask-count {
-    padding: 2px 8px;
-    border-radius: 6px;
+    padding: 0 var(--s2);
+    line-height: 24px;
+    border-radius: var(--r-sm);
     background: var(--panel-2);
     font-size: 12px;
   }
   .ask-meta {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0;
     margin-top: var(--s4);
   }
   .ask-title {
@@ -481,7 +506,7 @@
     border-left: 2px solid var(--stroke-2);
   }
   .ask-lines p {
-    margin: 0 0 6px;
+    margin: 0 0 var(--s2);
     font-size: 22px;
     font-weight: 700;
     line-height: 1.3;
@@ -497,5 +522,17 @@
   }
   .ask .row {
     margin-top: var(--s4);
+  }
+  /* узкое окно / телефон: шрифт меньше, чтобы в строке помещались слова */
+  @container (max-width: 720px) {
+    .line {
+      font-size: 26px;
+    }
+    .ask-lines p {
+      font-size: 18px;
+    }
+    .ask-q {
+      font-size: 22px;
+    }
   }
 </style>

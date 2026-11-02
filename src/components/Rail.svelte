@@ -7,7 +7,8 @@
   const nav: { id: View; label: string; icon: string }[] = [
     { id: 'home', label: 'Главная', icon: 'home' },
     { id: 'search', label: 'Поиск', icon: 'search' },
-    { id: 'now', label: 'Сейчас играет', icon: 'disc' },
+    // все иконки панели — контурные, одной толщины линии и одного размера
+    { id: 'now', label: 'Сейчас играет', icon: 'nowPlaying' },
   ];
 
   function openRoom() {

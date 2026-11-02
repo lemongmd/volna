@@ -64,7 +64,10 @@
       {/if}
     </div>
 
-    <PlayerBar />
+    <!-- на экране «Сейчас играет» свой большой плеер — нижняя панель не нужна -->
+    {#if ui.view !== 'now'}
+      <PlayerBar />
+    {/if}
   </div>
 
   <div class="bursts" aria-hidden="true">

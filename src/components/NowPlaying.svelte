@@ -4,7 +4,7 @@
   import Avatar from './Avatar.svelte';
   import Slider from './Slider.svelte';
   import Lyrics from './Lyrics.svelte';
-  import { current, pl, ps, room, ui } from '../lib/state.svelte';
+  import { current, pl, ps, room, settings, ui } from '../lib/state.svelte';
   import { dispatch, sendReaction } from '../lib/sync';
   import { fmtTime } from '../lib/util';
 
@@ -14,6 +14,20 @@
   const waiting = $derived(ps.playing && !!cur && (pl.loading || !ps.ready));
   const EMOJI = ['🔥', '❤️', '😂', '😭', '🤯', '👏'];
   const SRC: Record<string, string> = { ytm: 'YouTube Music', yt: 'YouTube', sc: 'SoundCloud', link: 'По ссылке' };
+
+  const volIcon = $derived(
+    settings.muted || settings.volume === 0 ? 'mute' : settings.volume < 0.5 ? 'volumeLow' : 'volume',
+  );
+
+  // Очередь и чат открываются в боковой панели — как из нижней панели на других экранах
+  function togglePanel(tab: 'queue' | 'chat') {
+    if (ui.panel && ui.tab === tab) ui.panel = false;
+    else {
+      ui.panel = true;
+      ui.tab = tab;
+      if (tab === 'chat') room.unread = 0;
+    }
+  }
 
   let dragging = $state(false);
   let dragVal = $state(0);
@@ -60,6 +74,29 @@
           aria-label="Повтор"
         >
           <Icon name={ps.repeat === 'one' ? 'repeat1' : 'repeat'} size={18} />
+        </button>
+      </div>
+      <div class="extras">
+        <div class="vol">
+          <button class="icon-btn" onclick={() => (settings.muted = !settings.muted)} aria-label="Звук" title="Звук">
+            <Icon name={volIcon} size={18} />
+          </button>
+          <Slider
+            value={settings.muted ? 0 : settings.volume}
+            max={1}
+            step={0.01}
+            label="Громкость"
+            oninput={(v) => ((settings.volume = v), (settings.muted = false))}
+          />
+        </div>
+        {#if room.code}
+          <button class="icon-btn rel" class:on={ui.panel && ui.tab === 'chat'} onclick={() => togglePanel('chat')} aria-label="Чат" title="Чат">
+            <Icon name="chat" size={18} />
+            {#if room.unread}<span class="unread">{room.unread > 9 ? '9+' : room.unread}</span>{/if}
+          </button>
+        {/if}
+        <button class="icon-btn" class:on={ui.panel && ui.tab === 'queue'} onclick={() => togglePanel('queue')} aria-label="Очередь" title="Очередь">
+          <Icon name="queue" size={18} />
         </button>
       </div>
       <div class="status muted">
@@ -145,11 +182,14 @@
 <style>
   .now {
     display: grid;
-    grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
+    /* обложка + узкая колонка текста; композиция по центру, без пустоты справа */
+    grid-template-columns: minmax(240px, 360px) minmax(0, 640px);
+    justify-content: center;
     gap: var(--s7);
     align-items: start;
     padding: 0;
-    height: calc(100vh - 170px);
+    /* окно минус отступы main и колонки: нижней панели на этом экране нет */
+    height: calc(100vh - var(--s7) - var(--s6) - var(--s4));
   }
   .left {
     display: flex;
@@ -163,7 +203,7 @@
   .title-row {
     display: flex;
     align-items: flex-start;
-    gap: var(--s3);
+    gap: var(--s2);
     margin-top: var(--s5);
   }
   .meta {
@@ -179,18 +219,19 @@
   .artist {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-top: 2px;
+    gap: var(--s2);
+    margin-top: 0;
     color: var(--muted);
   }
   .src {
     flex: none;
     font-size: 11px;
     color: var(--faint);
-    padding: 4px 8px;
-    border-radius: 6px;
+    padding: 0 var(--s2);
+    line-height: 24px;
+    border-radius: var(--r-sm);
     background: var(--panel);
-    margin-top: 4px;
+    margin-top: 0;
   }
   .prog {
     margin-top: var(--s5);
@@ -201,13 +242,13 @@
     font-size: 11px;
     color: var(--faint);
     font-variant-numeric: tabular-nums;
-    margin-top: 2px;
+    margin-top: 0;
   }
   .controls {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
+    gap: var(--s4);
     margin-top: 8px;
   }
   .big {
@@ -231,9 +272,44 @@
   .play :global(svg) {
     margin-left: 2px;
   }
+  .extras {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-top: var(--s2);
+  }
+  .extras .icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .vol {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-right: var(--s2);
+  }
+  .rel {
+    position: relative;
+  }
+  .unread {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: var(--r-sm);
+    background: var(--light);
+    color: var(--light-ink);
+    font-size: 10px;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+  }
   .status {
     min-height: 20px;
-    margin-top: 12px;
+    margin-top: var(--s4);
     text-align: center;
     font-size: 12.5px;
   }
@@ -268,19 +344,20 @@
     justify-content: space-between;
     align-items: center;
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: var(--s2);
   }
   .people {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: var(--s2);
   }
   .person {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: var(--s2);
     max-width: 200px;
-    padding: 3px 10px 3px 3px;
+    padding: 0 var(--s2) 0 0;
+    height: 32px;
     border-radius: 99px;
     background: var(--panel-2);
     font-size: 13px;
@@ -291,13 +368,13 @@
   }
   .reactions {
     display: flex;
-    gap: 4px;
-    margin-top: 12px;
+    gap: var(--s2);
+    margin-top: var(--s4);
   }
   .reactions button {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-sm);
     font-size: 19px;
     background: var(--panel);
     transition: background 0.12s, transform 0.12s;
@@ -317,10 +394,10 @@
   .next-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--s2);
     width: 100%;
-    padding: 5px 6px;
-    border-radius: 8px;
+    padding: var(--s2);
+    border-radius: var(--r-sm);
     text-align: left;
   }
   .next-row:hover {
@@ -342,7 +419,7 @@
     color: var(--muted);
   }
   .empty-q {
-    margin: 4px 0;
+    margin: var(--s2) 0;
     font-size: 13px;
   }
   .empty {
@@ -354,7 +431,7 @@
     color: var(--muted);
   }
   .empty h2 {
-    margin: 16px 0 4px;
+    margin: var(--s4) 0 var(--s2);
     color: var(--text);
     font-size: 19px;
   }
