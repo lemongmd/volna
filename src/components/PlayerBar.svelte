@@ -140,7 +140,7 @@
   .player {
     flex: none;
     height: 66px;
-    border-radius: var(--r-lg);
+    border-radius: var(--r-xl);
     display: grid;
     grid-template-columns: minmax(180px, 1fr) minmax(300px, 1.3fr) minmax(180px, 1fr);
     align-items: center;
@@ -243,7 +243,7 @@
     display: flex;
     gap: 2px;
     padding: 2px;
-    border-radius: 10px;
+    border-radius: var(--pill);
     background: var(--panel);
   }
   .vol {

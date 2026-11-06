@@ -57,13 +57,14 @@
   .fill {
     width: var(--p);
     height: 100%;
-    background: rgba(255, 255, 255, 0.85);
+    /* прогресс — в цвете обложки */
+    background: var(--cover-glow);
   }
   .slider:hover .track {
     height: 5px;
   }
   .slider:hover .fill {
-    background: #fff;
+    background: var(--cover);
   }
   input {
     position: relative;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import Backdrop from './components/Backdrop.svelte';
-  import Rail from './components/Rail.svelte';
+  import Sidebar from './components/Sidebar.svelte';
   import WindowControls from './components/WindowControls.svelte';
   import PlayerBar from './components/PlayerBar.svelte';
   import SidePanel from './components/SidePanel.svelte';
@@ -39,7 +39,7 @@
 
 <div class="app" class:fx={settings.fx}>
   <Backdrop />
-  <Rail />
+  <Sidebar />
 
   <div class="column">
     <div class="drag" data-tauri-drag-region></div>
@@ -97,7 +97,7 @@
     position: relative;
     height: 100%;
     display: grid;
-    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-columns: 232px minmax(0, 1fr);
     overflow: hidden;
   }
   .column {
@@ -107,7 +107,12 @@
     flex-direction: column;
     min-width: 0;
     min-height: 0;
-    padding: 0 8px 8px 0;
+    padding: 0 var(--s2) var(--s2) var(--s2);
+  }
+  @media (max-width: 1100px) {
+    .app {
+      grid-template-columns: 64px minmax(0, 1fr);
+    }
   }
   .drag {
     position: absolute;
@@ -137,7 +142,7 @@
   }
   .bursts {
     position: fixed;
-    left: 64px;
+    left: 232px;
     right: 0;
     bottom: 96px;
     height: 0;

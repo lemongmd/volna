@@ -313,7 +313,10 @@
     margin: 0;
     border-radius: var(--r-sm);
     font-size: 36px;
-    font-weight: 750;
+    font-family: var(--f-head);
+    font-weight: 900;
+    font-optical-sizing: auto;
+    font-variation-settings: var(--head-axes);
     line-height: 1.2;
     letter-spacing: -0.01em;
     color: #fff;
@@ -431,7 +434,7 @@
     align-items: center;
     height: 40px;
     padding: 0 var(--s4);
-    border-radius: var(--r-sm);
+    border-radius: var(--pill);
     background: var(--panel-2);
     color: var(--muted);
     white-space: nowrap;
@@ -439,7 +442,7 @@
   .offset {
     display: inline-flex;
     align-items: center;
-    border-radius: var(--r-sm);
+    border-radius: var(--pill);
     background: var(--panel-2);
   }
   .offset .mono {
@@ -455,7 +458,7 @@
     flex: none;
     display: grid;
     place-items: center;
-    border-radius: var(--r-sm);
+    border-radius: var(--pill);
     color: var(--text);
     transition: background 0.15s;
   }
@@ -517,6 +520,8 @@
   }
   .ask-q {
     margin-top: var(--s5);
+    font-family: var(--f-head);
+    font-variation-settings: var(--head-axes);
     font-size: 26px;
     font-weight: 750;
   }

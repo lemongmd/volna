@@ -1,5 +1,24 @@
+/* Цвет обложки — анимируемые свойства, чтобы при смене трека цвет плавно перетекал */
+@property --cover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #cfe3ff;
+}
+@property --cover-glow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #e6efff;
+}
+@property --cover-tint {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(207, 227, 255, 0.1);
+}
+
 :root {
-  --bg: #0e0e12;
+  /* палитра «Под обложку»: почти чёрная основа + цвет текущей обложки */
+  --bg: #070708;
+  --side: #0c0c0e;
   --text: #f3f3f6;
   --muted: rgba(255, 255, 255, 0.56);
   --faint: rgba(255, 255, 255, 0.34);
@@ -10,8 +29,23 @@
   --stroke: rgba(255, 255, 255, 0.07);
   --stroke-2: rgba(255, 255, 255, 0.12);
 
-  --light: #ececf1;
-  --light-ink: #121216;
+  --light: #f2f2f4;
+  --light-ink: #0b0b0d;
+
+  /* цвет из обложки (ставит lib/coverColor.ts) */
+  --cover: #cfe3ff;
+  --cover-glow: #e6efff;
+  --cover-tint: rgba(207, 227, 255, 0.1);
+  transition:
+    --cover 1.2s ease,
+    --cover-glow 1.2s ease,
+    --cover-tint 1.2s ease;
+
+  /* шрифты: заголовки — Roboto Flex с настройками «как у Яндекса», интерфейс — Onest */
+  --f-head: 'Roboto Flex Variable', 'Onest Variable', 'Segoe UI', system-ui, sans-serif;
+  --f-ui: 'Onest Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --head-axes: 'slnt' 0, 'wdth' 100, 'GRAD' 0, 'XOPQ' 175, 'XTRA' 468, 'YOPQ' 15, 'YTAS' 750, 'YTDE' -203, 'YTFI' 738,
+    'YTLC' 514, 'YTUC' 712;
   --live: #3ddc97;
   --danger: #ff6b81;
 
@@ -20,6 +54,8 @@
   --r-sm: 8px;
   --r: 12px;
   --r-lg: 16px;
+  --r-xl: 24px;
+  --pill: 999px;
 
   /* шкала отступов */
   --s1: 4px;
@@ -31,9 +67,8 @@
   --s7: 48px;
 
   color-scheme: dark;
-  font-family: 'Geist Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: var(--f-ui);
   font-size: 14px;
-  font-feature-settings: 'ss01', 'tnum' 0;
   line-height: 1.4;
   color: var(--text);
   background: var(--bg);
@@ -66,6 +101,17 @@ button {
   border: none;
   background: none;
   padding: 0;
+}
+
+/* дисплейный шрифт: имена артистов, заголовки экранов, текст песни */
+.display,
+h1,
+h2 {
+  font-family: var(--f-head);
+  font-weight: 900;
+  font-style: normal;
+  font-optical-sizing: auto;
+  font-variation-settings: var(--head-axes);
 }
 
 button:focus-visible,
@@ -104,7 +150,7 @@ img {
 .surface {
   background: var(--panel);
   border: 1px solid var(--stroke);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-xl);
 }
 
 .glass {
@@ -121,10 +167,10 @@ img {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: var(--r-sm);
-  font-weight: 500;
+  height: 40px;
+  padding: 0 var(--s5);
+  border-radius: var(--pill);
+  font-weight: 600;
   background: var(--panel-2);
   transition:
     background 0.15s,
@@ -150,16 +196,17 @@ img {
   background: #fff;
 }
 .btn-lg {
-  height: 40px;
-  padding: 0 18px;
+  height: 48px;
+  padding: 0 var(--s6);
+  font-size: 15px;
 }
 
 .icon-btn {
   display: inline-grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-sm);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--pill);
   color: var(--muted);
   transition:
     background 0.15s,
@@ -174,13 +221,41 @@ img {
   background: var(--panel-2);
 }
 
+/* кнопка-кольцо: тонкая обводка, как в большом плеере */
+.ring {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--pill);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: var(--text);
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.1s;
+}
+.ring:hover {
+  background: var(--panel-2);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+.ring:active {
+  transform: scale(0.95);
+}
+.ring.on {
+  background: var(--light);
+  color: var(--light-ink);
+  border-color: var(--light);
+}
+
 .tab-chip {
-  height: 32px;
-  padding: 0 14px;
-  border-radius: var(--r-sm);
+  height: 36px;
+  padding: 0 var(--s4);
+  border-radius: var(--pill);
   background: var(--panel-2);
   color: var(--text);
-  font-weight: 500;
+  font-weight: 600;
   transition: background 0.15s;
 }
 .tab-chip:hover {
@@ -193,9 +268,9 @@ img {
 
 .input {
   width: 100%;
-  height: 36px;
-  padding: 0 12px;
-  border-radius: var(--r-sm);
+  height: 40px;
+  padding: 0 var(--s4);
+  border-radius: var(--pill);
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid transparent;
   outline: none;
@@ -216,15 +291,15 @@ img {
 
 .page-title {
   margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.015em;
+  font-size: 44px;
+  line-height: 1;
+  text-wrap: balance;
 }
 
 .section-title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 650;
+  font-size: 24px;
+  line-height: 1.1;
 }
 
 .muted {

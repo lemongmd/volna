@@ -137,7 +137,7 @@
     flex: 1;
     min-width: 0;
     height: 42px;
-    border-radius: var(--r-sm);
+    border-radius: var(--pill);
     background: rgba(255, 255, 255, 0.07);
     border: 1px solid transparent;
     outline: none;

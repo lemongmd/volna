@@ -12,7 +12,7 @@
 </script>
 
 {#if win}
-  <div class="wc glass">
+  <div class="wc">
     <button onclick={() => win.minimize()} aria-label="Свернуть"><Icon name="minimize" size={14} /></button>
     <button onclick={() => win.toggleMaximize()} aria-label="Развернуть"><Icon name="maximize" size={11} /></button>
     <button class="close" onclick={() => win.close()} aria-label="Закрыть"><Icon name="x" size={14} /></button>
@@ -22,21 +22,20 @@
 <style>
   .wc {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 0;
+    right: 0;
     z-index: 6;
     display: flex;
-    padding: 3px;
-    border-radius: 10px;
   }
   button {
-    width: 34px;
-    height: 26px;
+    width: 46px;
+    height: 36px;
     display: grid;
     place-items: center;
-    border-radius: 7px;
     color: var(--muted);
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s;
   }
   button:hover {
     background: var(--panel-2);

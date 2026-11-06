@@ -1,17 +1,13 @@
 <script lang="ts">
   import { current, settings } from '../lib/state.svelte';
-  import { api } from '../lib/api';
+  import { setCoverColor } from '../lib/coverColor';
 
-  // Фон окрашивается обложкой текущего трека: она сильно размыта и затемнена.
-  const thumb = $derived(settings.fx ? (current()?.thumb ?? '') : '');
+  // Палитра «Под обложку»: главный цвет обложки заливает фон мягким светом.
+  $effect(() => setCoverColor(current()?.thumb));
 </script>
 
-<div class="backdrop" aria-hidden="true">
-  {#key thumb}
-    {#if thumb}
-      <img class="cover" src={api.img(thumb)} alt="" referrerpolicy="no-referrer" />
-    {/if}
-  {/key}
+<div class="backdrop" class:off={!settings.fx} aria-hidden="true">
+  <div class="flood"></div>
   <div class="shade"></div>
 </div>
 
@@ -22,27 +18,23 @@
     z-index: 0;
     overflow: hidden;
     pointer-events: none;
-    background: radial-gradient(1000px 600px at 30% -10%, #1f2130 0%, transparent 70%), var(--bg);
+    background: var(--bg);
   }
-  .cover {
+  .flood {
     position: absolute;
-    inset: -15%;
-    width: 130%;
-    height: 130%;
-    object-fit: cover;
-    filter: blur(100px) saturate(1.15) brightness(0.8);
-    opacity: 0.6;
-    transform: translateZ(0);
-    animation: cover-in 0.9s ease both;
+    inset: 0;
+    background:
+      radial-gradient(70% 60% at 62% 38%, var(--cover-tint), transparent 70%),
+      radial-gradient(45% 40% at 18% 100%, var(--cover-tint), transparent 75%);
+    opacity: 0.9;
+    transition: opacity 0.6s ease;
   }
-  @keyframes cover-in {
-    from {
-      opacity: 0;
-    }
+  .off .flood {
+    opacity: 0.25;
   }
   .shade {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(14, 14, 18, 0.35) 0%, rgba(14, 14, 18, 0.7) 55%, rgba(14, 14, 18, 0.9) 100%);
+    background: linear-gradient(180deg, rgba(7, 7, 8, 0) 0%, rgba(7, 7, 8, 0.55) 100%);
   }
 </style>

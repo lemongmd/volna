@@ -164,9 +164,9 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 36px;
+    height: 40px;
     padding: 0 var(--s3);
-    border-radius: var(--r-sm);
+    border-radius: var(--pill);
     background: rgba(255, 255, 255, 0.07);
     color: var(--muted);
     border: 1px solid transparent;

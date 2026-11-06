@@ -25,7 +25,7 @@ export const ui = $state({
   view: 'home' as View,
   panel: false,
   tab: 'queue' as 'queue' | 'chat' | 'people',
-  npTab: 'lyrics' as 'lyrics' | 'next' | 'room',
+  npTab: 'stage' as 'stage' | 'lyrics' | 'next' | 'room',
   modal: null as null | 'join' | 'settings' | 'profile',
   ready: false,
   query: '',

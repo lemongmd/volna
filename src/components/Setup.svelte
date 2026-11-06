@@ -58,7 +58,7 @@
 </script>
 
 <div class="setup">
-  <div class="card glass">
+  <div class="card">
     <div class="logo">
       <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"
         ><path d="M3 10c2-3.5 4-3.5 6 0s4 3.5 6 0 4-3.5 6 0" /><path d="M3 16c2-2.5 4-2.5 6 0s4 2.5 6 0 4-2.5 6 0" opacity=".55" /></svg
@@ -121,9 +121,9 @@
     animation: fade-in 0.4s ease both;
   }
   h1 {
-    margin: 14px 0 6px;
-    font-size: 26px;
-    font-weight: 700;
+    margin: var(--s4) 0 var(--s2);
+    font-size: 48px;
+    line-height: 1;
   }
   p {
     margin: 0 0 20px;

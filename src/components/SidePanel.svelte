@@ -199,7 +199,7 @@
     width: 340px;
     flex: none;
     margin-top: var(--s7);
-    border-radius: var(--r-lg);
+    border-radius: var(--r-xl);
     display: flex;
     flex-direction: column;
     overflow: hidden;

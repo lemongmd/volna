@@ -41,7 +41,7 @@
   }
   .modal {
     position: relative;
-    border-radius: 16px;
+    border-radius: var(--r-xl);
     padding: 24px;
     max-height: calc(100vh - 80px);
     overflow-y: auto;

@@ -13,7 +13,7 @@
 
 <div class="card" class:cur={isCur} onmouseenter={() => hoverStart(track)} onmouseleave={hoverEnd} role="group">
   <div class="art">
-    <Cover src={track.thumb} size="100%" radius={10} />
+    <Cover src={track.thumb} size="100%" radius={12} />
     <div class="hover"></div>
     <button class="play" onclick={() => playNow(track)} aria-label="Играть «{track.title}»">
       {#if isCur && ps.playing}<Bars size={14} />{:else}<Icon name="play" size={16} />{/if}
@@ -36,13 +36,13 @@
   .art {
     position: relative;
     aspect-ratio: 1;
-    border-radius: 10px;
+    border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
   }
   .hover {
     position: absolute;
     inset: 0;
-    border-radius: 10px;
+    border-radius: 12px;
     background: rgba(0, 0, 0, 0.25);
     opacity: 0;
     transition: opacity 0.15s;
