@@ -12,6 +12,7 @@ export interface Settings {
   muted: boolean;
   broker: string;
   fx: boolean;
+  cookieBrowser: 'none' | 'chrome' | 'firefox' | 'edge' | 'brave';
   source: 'ytm' | 'yt' | 'sc';
 }
 
