@@ -1,3 +1,4 @@
+mod cookie;
 mod deps;
 mod images;
 mod lyrics;
@@ -41,6 +42,8 @@ pub struct Inner {
     pub bin_dir: PathBuf,
     pub cache_dir: PathBuf,
     pub ytdlp_cache: PathBuf,
+    pub cookie_browser_path: PathBuf,
+    pub cookie_browser: Mutex<String>,
     http: reqwest::Client,
     pub streams: Mutex<HashMap<String, StreamEntry>>,
     pub locks: Mutex<HashMap<String, Arc<tokio::sync::Mutex<()>>>>,
@@ -88,6 +91,8 @@ pub fn run() {
             let bin_dir = base.join("bin");
             let cache_dir = base.join("cache");
             let ytdlp_cache = base.join("ytdlp-cache");
+            let cookie_browser_path = base.join("cookie-browser");
+            let cookie_browser = cookie::load_cookie_browser(&cookie_browser_path);
             // Кэш треков чистим при каждом запуске — он нужен только на сессию.
             let _ = std::fs::remove_dir_all(&cache_dir);
             for d in [&bin_dir, &cache_dir, &ytdlp_cache] {
@@ -100,6 +105,8 @@ pub fn run() {
                 bin_dir,
                 cache_dir,
                 ytdlp_cache,
+                cookie_browser_path,
+                cookie_browser: Mutex::new(cookie_browser),
                 http,
                 streams: Mutex::new(HashMap::new()),
                 locks: Mutex::new(HashMap::new()),
@@ -127,6 +134,7 @@ pub fn run() {
             search::search,
             ytdlp::resolve,
             ytdlp::resolve_link,
+            cookie::set_cookie_browser,
             lyrics::lyrics,
             lyrics::lyrics_candidates,
         ])

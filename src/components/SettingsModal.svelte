@@ -30,6 +30,16 @@
     refreshPresence();
   }
 
+  async function setCookieBrowser(event: Event) {
+    const browser = (event.currentTarget as HTMLSelectElement).value as typeof settings.cookieBrowser;
+    settings.cookieBrowser = browser;
+    try {
+      await api.setCookieBrowser(browser);
+    } catch (e) {
+      toast(errText(e), 'error');
+    }
+  }
+
   async function update() {
     updating = true;
     try {
@@ -99,6 +109,19 @@
       </button>
     </div>
     <p class="muted s">Если YouTube перестал играть — нажми «Обновить»: YouTube часто меняет защиту, и yt-dlp быстро выпускает фиксы.</p>
+    <label class="row cookie-browser">
+      <span>
+        <span class="t">Cookies браузера</span>
+        <span class="muted s">Использовать cookies выбранного браузера для yt-dlp.</span>
+      </span>
+      <select class="input" value={settings.cookieBrowser} onchange={setCookieBrowser} aria-label="Cookies браузера">
+        <option value="none">Не использовать</option>
+        <option value="chrome">Chrome</option>
+        <option value="firefox">Firefox</option>
+        <option value="edge">Edge</option>
+        <option value="brave">Brave</option>
+      </select>
+    </label>
   </section>
 
   <section>
@@ -214,6 +237,13 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+  }
+  .cookie-browser {
+    margin-top: 12px;
+  }
+  .cookie-browser select {
+    width: 150px;
+    flex: none;
   }
   p.s {
     margin: 10px 0 0;

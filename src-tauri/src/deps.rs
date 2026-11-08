@@ -99,6 +99,14 @@ pub fn ytdlp_command(state: &AppState) -> Result<tokio::process::Command, String
     cmd.stdout(std::process::Stdio::piped());
     cmd.stderr(std::process::Stdio::piped());
     cmd.kill_on_drop(true);
+    let browser = state
+        .cookie_browser
+        .lock()
+        .map_err(|_| "Не удалось прочитать настройку cookies браузера".to_string())?
+        .clone();
+    if browser != "none" {
+        cmd.arg("--cookies-from-browser").arg(browser);
+    }
     #[cfg(windows)]
     {
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;

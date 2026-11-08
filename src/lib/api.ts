@@ -26,6 +26,7 @@ export const api = {
   depsStatus: () => invoke<DepsStatus>('deps_status'),
   installDeps: () => invoke<void>('install_deps'),
   updateEngine: () => invoke<string>('update_engine'),
+  setCookieBrowser: (browser: string) => invoke<void>('set_cookie_browser', { browser }),
   search: (query: string, source: string) => invoke<Track[]>('search', { query, source }),
   /** hint — название и исполнитель: по ним ищется замена, если оригинал недоступен в регионе. */
   resolve: (url: string, force = false, hint?: { title: string; artist: string; duration: number }) =>

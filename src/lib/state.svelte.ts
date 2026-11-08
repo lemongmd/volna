@@ -12,13 +12,14 @@ export interface Settings {
   muted: boolean;
   broker: string;
   fx: boolean;
+  cookieBrowser: 'none' | 'chrome' | 'firefox' | 'edge' | 'brave';
   source: 'ytm' | 'yt' | 'sc';
 }
 
 export const profile: Profile = $state(load<Profile>('profile', { uid: rid(12), name: '', color: pickColor() }));
 
 export const settings: Settings = $state(
-  load<Settings>('settings', { volume: 0.8, muted: false, broker: '', fx: true, source: 'ytm' }),
+  load<Settings>('settings', { volume: 0.8, muted: false, broker: '', fx: true, cookieBrowser: 'none', source: 'ytm' }),
 );
 
 export const ui = $state({
