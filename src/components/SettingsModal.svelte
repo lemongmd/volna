@@ -30,6 +30,16 @@
     refreshPresence();
   }
 
+  async function setCookieBrowser(event: Event) {
+    const browser = (event.currentTarget as HTMLSelectElement).value as typeof settings.cookieBrowser;
+    settings.cookieBrowser = browser;
+    try {
+      await api.setCookieBrowser(browser);
+    } catch (e) {
+      toast(errText(e), 'error');
+    }
+  }
+
   async function update() {
     updating = true;
     try {
@@ -104,7 +114,7 @@
         <span class="t">Cookies браузера</span>
         <span class="muted s">Использовать cookies выбранного браузера для yt-dlp.</span>
       </span>
-      <select class="input" bind:value={settings.cookieBrowser} aria-label="Cookies браузера">
+      <select class="input" value={settings.cookieBrowser} onchange={setCookieBrowser} aria-label="Cookies браузера">
         <option value="none">Не использовать</option>
         <option value="chrome">Chrome</option>
         <option value="firefox">Firefox</option>
