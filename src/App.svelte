@@ -12,28 +12,64 @@
   import RoomModal from './components/RoomModal.svelte';
   import SettingsModal from './components/SettingsModal.svelte';
   import Toasts from './components/Toasts.svelte';
+  import SearchSwitcher from './components/SearchSwitcher.svelte';
   import { bursts, settings, ui } from './lib/state.svelte';
   import { setVolume } from './lib/player';
   import { dispatch } from './lib/sync';
+  import { finder, findCancel, findCommit, findPress, findStep } from './lib/finder.svelte';
 
   $effect(() => setVolume(settings.volume, settings.muted));
 
   onMount(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (!ui.ready) return;
+      const mod = e.ctrlKey || e.metaKey;
+
+      // Ctrl уже отпущен, а keyup потерялся (например, окно теряло фокус) — не зависаем в выборе
+      if (finder.active && !mod) findCommit();
+
+      if (finder.active) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          findCancel();
+          return;
+        }
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          findStep(e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1);
+          return;
+        }
+      }
+
+      // Ctrl+F работает и в полях ввода — в том числе чтобы переключать режим, пока ты в поиске
+      if (mod && !e.altKey && e.code === 'KeyF') {
+        e.preventDefault();
+        if (!ui.modal && !e.repeat) findPress(e.shiftKey);
+        return;
+      }
+
       const t = e.target as HTMLElement;
-      if (t.closest('input, textarea') || !ui.ready) return;
+      if (t.closest('input, textarea')) return;
       if (e.code === 'Space') {
         e.preventDefault();
         dispatch({ t: 'toggle' });
       } else if (e.ctrlKey && e.code === 'ArrowRight') dispatch({ t: 'next' });
       else if (e.ctrlKey && e.code === 'ArrowLeft') dispatch({ t: 'prev' });
-      else if (e.ctrlKey && e.code === 'KeyF') {
-        e.preventDefault();
-        ui.view = 'search';
-      }
     };
+    // Отпустили Ctrl — выбранный режим поиска открывается (как в Alt+Tab)
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta') findCommit();
+    };
+    const onBlur = () => findCommit();
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
+    };
   });
 </script>
 
@@ -80,6 +116,7 @@
   </div>
 
   <Toasts />
+  <SearchSwitcher />
 
   {#if ui.modal === 'join'}
     <RoomModal />

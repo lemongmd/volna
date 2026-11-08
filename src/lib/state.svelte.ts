@@ -30,6 +30,9 @@ export const ui = $state({
   modal: null as null | 'join' | 'settings' | 'profile',
   ready: false,
   query: '',
+  /** Запросы на фокус поля поиска: ставит переключатель Ctrl+F, забирает нужный экран. */
+  trackFindReq: false,
+  lineFindReq: false,
 });
 
 export const ps: PlayState = $state({

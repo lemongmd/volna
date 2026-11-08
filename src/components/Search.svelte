@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import Icon from './Icon.svelte';
   import TrackRow from './TrackRow.svelte';
   import { settings, ui } from '../lib/state.svelte';
@@ -75,6 +75,16 @@
     error = '';
     input.focus();
   }
+
+  // Ctrl+F (режим «Треки»), когда мы уже на этом экране: фокус в поле и выделить запрос
+  $effect(() => {
+    if (!ui.trackFindReq) return;
+    ui.trackFindReq = false;
+    tick().then(() => {
+      input?.focus();
+      input?.select();
+    });
+  });
 
   onMount(() => {
     input?.focus();
