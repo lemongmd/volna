@@ -41,6 +41,7 @@ pub struct Inner {
     pub bin_dir: PathBuf,
     pub cache_dir: PathBuf,
     pub ytdlp_cache: PathBuf,
+    pub cookie_browser: Mutex<String>,
     http: reqwest::Client,
     pub streams: Mutex<HashMap<String, StreamEntry>>,
     pub locks: Mutex<HashMap<String, Arc<tokio::sync::Mutex<()>>>>,
@@ -100,6 +101,7 @@ pub fn run() {
                 bin_dir,
                 cache_dir,
                 ytdlp_cache,
+                cookie_browser: Mutex::new("none".into()),
                 http,
                 streams: Mutex::new(HashMap::new()),
                 locks: Mutex::new(HashMap::new()),
@@ -127,6 +129,7 @@ pub fn run() {
             search::search,
             ytdlp::resolve,
             ytdlp::resolve_link,
+            ytdlp::set_cookie_browser,
             lyrics::lyrics,
             lyrics::lyrics_candidates,
         ])
