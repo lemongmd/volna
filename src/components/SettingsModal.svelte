@@ -3,6 +3,7 @@
   import Modal from './Modal.svelte';
   import Icon from './Icon.svelte';
   import Avatar from './Avatar.svelte';
+  import Select from './Select.svelte';
   import { profile, recent, room, settings, toast, ui } from '../lib/state.svelte';
   import { api, type DepsStatus } from '../lib/api';
   import { BROKERS, refreshPresence } from '../lib/sync';
@@ -30,8 +31,15 @@
     refreshPresence();
   }
 
-  async function setCookieBrowser(event: Event) {
-    const browser = (event.currentTarget as HTMLSelectElement).value as typeof settings.cookieBrowser;
+  const COOKIE_BROWSERS: { value: typeof settings.cookieBrowser; label: string }[] = [
+    { value: 'none', label: 'Не использовать' },
+    { value: 'chrome', label: 'Chrome' },
+    { value: 'firefox', label: 'Firefox' },
+    { value: 'edge', label: 'Edge' },
+    { value: 'brave', label: 'Brave' },
+  ];
+
+  async function setCookieBrowser(browser: typeof settings.cookieBrowser) {
     settings.cookieBrowser = browser;
     try {
       await api.setCookieBrowser(browser);
@@ -109,19 +117,13 @@
       </button>
     </div>
     <p class="muted s">Если YouTube перестал играть — нажми «Обновить»: YouTube часто меняет защиту, и yt-dlp быстро выпускает фиксы.</p>
-    <label class="row cookie-browser">
+    <div class="row cookie-browser">
       <span>
         <span class="t">Cookies браузера</span>
         <span class="muted s">Использовать cookies выбранного браузера для yt-dlp.</span>
       </span>
-      <select class="input" value={settings.cookieBrowser} onchange={setCookieBrowser} aria-label="Cookies браузера">
-        <option value="none">Не использовать</option>
-        <option value="chrome">Chrome</option>
-        <option value="firefox">Firefox</option>
-        <option value="edge">Edge</option>
-        <option value="brave">Brave</option>
-      </select>
-    </label>
+      <Select value={settings.cookieBrowser} options={COOKIE_BROWSERS} onchange={setCookieBrowser} label="Cookies браузера" width={168} />
+    </div>
   </section>
 
   <section>
@@ -240,10 +242,7 @@
   }
   .cookie-browser {
     margin-top: 12px;
-  }
-  .cookie-browser select {
-    width: 150px;
-    flex: none;
+    cursor: default;
   }
   p.s {
     margin: 10px 0 0;

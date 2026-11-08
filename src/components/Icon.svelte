@@ -50,6 +50,8 @@
   import i_plusSm from 'bootstrap-icons/icons/plus.svg?raw';
   import i_note from 'bootstrap-icons/icons/music-note.svg?raw';
   import i_file from 'bootstrap-icons/icons/file-earmark-music.svg?raw';
+  import i_chevDown from 'bootstrap-icons/icons/chevron-down.svg?raw';
+  import i_chevUp from 'bootstrap-icons/icons/chevron-up.svg?raw';
 
   function inner(svg: string) {
     const s = svg.indexOf('>') + 1;
@@ -106,6 +108,8 @@
     plusSm: i_plusSm,
     note: i_note,
     file: i_file,
+    chevDown: i_chevDown,
+    chevUp: i_chevUp,
   };
   const PATHS: Record<string, string> = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k, inner(v)]));
 </script>
